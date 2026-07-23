@@ -21,7 +21,15 @@ In Claude Code:
 
 Restart Claude Code, then run `/leaderboard` and say you want to join. It handles setup and your first push, and from then on the plugin auto-pushes your daily totals (at most once a day, silently, when a session ends). You never think about it again. The grind simply accrues.
 
-You'll also need push access: send Brendan your GitHub handle on Slack. You need Python 3 and the `gh` CLI (most GiveWell staff already have both from the GitHub setup).
+You'll also need push access: send Brendan your GitHub handle on Slack.
+
+**Missing git or the `gh` CLI?** Run the installers in [`setup/`](setup/) — no Homebrew, no sudo:
+
+```bash
+bash setup/install-git.sh   # Apple's Command Line Tools dialog; skips if present
+bash setup/install-gh.sh    # gh into ~/.local/bin
+gh auth login               # pick GitHub.com → HTTPS → login with browser
+```
 
 ## Join in (the manual way)
 
