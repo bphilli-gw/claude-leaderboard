@@ -440,10 +440,13 @@ function goomba(size) {
 
 // roaming troop behind the board: [top, travel seconds, delay, size, reversed]
 const TROOP = [
-  ["4%", 44, -8, 52, false], ["12%", 58, -33, 34, true], ["21%", 38, -5, 64, false],
-  ["30%", 66, -48, 30, true], ["39%", 47, -19, 46, false], ["48%", 55, -37, 72, true],
-  ["57%", 41, -11, 38, false], ["66%", 62, -50, 56, true], ["75%", 49, -26, 44, false],
-  ["84%", 70, -58, 66, true], ["90%", 43, -15, 36, false], ["95%", 59, -41, 58, true],
+  ["2%", 46, -9, 96, false],   ["7%", 61, -35, 58, true],   ["13%", 39, -5, 128, false],
+  ["19%", 68, -49, 64, true],  ["25%", 49, -20, 84, false], ["31%", 55, -38, 150, true],
+  ["37%", 42, -12, 70, false], ["43%", 63, -51, 104, true], ["49%", 50, -27, 170, false],
+  ["55%", 71, -60, 60, true],  ["61%", 44, -16, 116, false],["67%", 58, -42, 76, true],
+  ["73%", 47, -23, 140, false],["79%", 65, -54, 66, true],  ["84%", 40, -7, 92, false],
+  ["88%", 60, -45, 122, true], ["92%", 52, -30, 72, false], ["95%", 69, -57, 108, true],
+  ["97%", 45, -18, 88, false], ["99%", 56, -40, 62, true],
 ];
 document.getElementById("goombas").innerHTML = TROOP.map(([top, t, dl, s, rev]) =>
   `<div class="goomba${rev ? " rev" : ""}" style="top:${top};--t:${t}s;--dl:${dl}s">${goomba(s)}</div>`).join("");
