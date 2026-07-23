@@ -64,6 +64,25 @@
   @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
   .ticker b { color: #ff7a1a; margin: 0 14px; }
 
+  .rail { position: fixed; top: 0; bottom: 0; width: 88px; overflow: hidden;
+          display: none; z-index: 0; pointer-events: none;
+          -webkit-mask-image: linear-gradient(180deg, transparent, #000 8%, #000 92%, transparent);
+          mask-image: linear-gradient(180deg, transparent, #000 8%, #000 92%, transparent); }
+  .rail-l { left: 0; } .rail-r { right: 0; }
+  @media (min-width: 1220px) { .rail { display: block; } }
+  .rail-track { display: flex; flex-direction: column; align-items: center; gap: 30px;
+                padding: 24px 0; animation: railscroll 70s linear infinite; }
+  .rail-r .rail-track { animation-direction: reverse; }
+  @keyframes railscroll { from { transform: translateY(0); } to { transform: translateY(-50%); } }
+  .rail img { width: 46px; height: 46px; image-rendering: pixelated; border-radius: 10px;
+              border: 1px solid var(--ring); }
+  .rail img:nth-of-type(even) { transform: rotate(-7deg); }
+  .rail img:nth-of-type(odd) { transform: rotate(7deg); }
+  .rail .vtext { writing-mode: vertical-rl; text-orientation: mixed; white-space: nowrap;
+                 font-size: 12px; font-weight: 800; letter-spacing: 0.32em; }
+  .rail .spark { color: #da7756; font-size: 22px; line-height: 1; }
+  .rail .prompt { font: 700 15px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
+
   .quote { margin-top: 16px; color: var(--ink-2); font-size: 13px; font-style: italic; text-align: center; }
   .title-tag { display: block; font-size: 11px; font-weight: 800; letter-spacing: 0.14em; color: #ff7a1a; }
   td .rank-title { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; color: #ff7a1a; }
@@ -133,6 +152,8 @@
 </style>
 </head>
 <body>
+<div class="rail rail-l" aria-hidden="true"><div class="rail-track"></div></div>
+<div class="rail rail-r" aria-hidden="true"><div class="rail-track"></div></div>
 <div class="wrap">
   <img class="banner" src="assets/banner.jpg" alt="A coder achieving terminal velocity. CLAUDE CODE. LFG!">
   <header>
@@ -167,7 +188,7 @@
     <table id="board" aria-label="Leaderboard">
       <thead><tr>
         <th></th><th>Gladiator</th>
-        <th class="num">Tokens burned</th><th class="num">Shipped</th>
+        <th class="num">Tokens burned</th><th class="num">Daily burn</th>
         <th class="num">Sessions</th><th class="num">Days in the trenches</th>
         <th class="num">Streak</th><th>The grind (30d)</th>
       </tr></thead>
@@ -246,12 +267,12 @@ function streak(u) {
 }
 
 function userStats(u, days) {
-  const s = { tokens: 0, out: 0, sessions: 0, active: 0 };
+  const s = { tokens: 0, sessions: 0, active: 0 };
   for (const d of days) {
     const rec = u.days[d];
     if (!rec) continue;
     s.active++; s.sessions += rec.sessions || 0;
-    for (const t of Object.values(rec.models)) { s.tokens += tokSum(t); s.out += t.out||0; }
+    for (const t of Object.values(rec.models)) s.tokens += tokSum(t);
   }
   return s;
 }
@@ -274,17 +295,19 @@ function render(nDays) {
   const label = nDays ? `last ${nDays} days` : "all time";
 
   // --- tiles ---
-  let tokens = 0, out = 0;
+  let tokens = 0;
   const activeUsers = new Set();
   for (const u of DATA) {
     const s = userStats(u, days);
-    tokens += s.tokens; out += s.out;
+    tokens += s.tokens;
     if (s.active) activeUsers.add(u.user);
   }
+  const daysWithFire = days.filter(d => DATA.some(u => u.days[d])).length;
+  const dailyBurn = daysWithFire ? tokens / daysWithFire : 0;
   const bestStreak = DATA.map(u => ({u: u.user, n: streak(u)})).sort((a,b) => b.n - a.n)[0] || {u:"–",n:0};
   document.getElementById("tiles").innerHTML = `
     <div class="tile"><div class="label">TOKENS INCINERATED</div><div class="value fire">${fmt(tokens)}</div><div class="hint">fed to the machine, ${label}</div></div>
-    <div class="tile"><div class="label">OUTPUT EXTRACTED</div><div class="value">${fmt(out)}</div><div class="hint">wrenched from the void, ${label}</div></div>
+    <div class="tile"><div class="label">DAILY BURN</div><div class="value">${fmt(Math.round(dailyBurn))}</div><div class="hint">tokens per day of combat, ${label}</div></div>
     <div class="tile"><div class="label">SOULS LOCKED IN</div><div class="value">${activeUsers.size}</div><div class="hint">${activeUsers.size === 1 ? "one warrior stands alone" : "warriors in the arena"}, ${label}</div></div>
     <div class="tile"><div class="label">LONGEST UNBROKEN GRIND</div><div class="value">${bestStreak.n}d</div><div class="hint">${bestStreak.n ? bestStreak.u + " — ABSOLUTE UNIT" : "NOBODY IS LOCKED IN. UNACCEPTABLE."}</div></div>`;
 
@@ -369,7 +392,7 @@ function render(nDays) {
       <td class="rank">${i+1}</td>
       <td class="user">${r.u.user}${i === 0 && r.s.tokens ? " 👑" : ""}<span class="rank-title">${rankTitle(i, r.s)}</span></td>
       <td class="num">${fmt(r.s.tokens)}</td>
-      <td class="num">${fmt(r.s.out)}</td>
+      <td class="num">${r.s.active ? fmt(Math.round(r.s.tokens / r.s.active)) + "/d" : "–"}</td>
       <td class="num">${r.s.sessions}</td>
       <td class="num">${r.s.active}</td>
       <td class="num streak">${r.streak ? r.streak + "d " + fire(r.streak) : "–"}</td>
@@ -389,6 +412,25 @@ function render(nDays) {
     <table><thead><tr><th>Date</th>${famsPresent.map(f=>`<th class="num">${f.label}</th>`).join("")}
     <th class="num">Total</th><th class="num">Sessions</th></tr></thead><tbody>${dtRows}</tbody></table>`;
 }
+
+// --- side rails: grind art for the wide-screen faithful ---
+const RAIL = [
+  `<img src="assets/lfg.png" alt="">`,
+  `<span class="vtext fire">GRIND</span>`,
+  `<span class="spark">✻</span>`,
+  `<span class="prompt">&gt;_</span>`,
+  `<span class="vtext fire">BURN</span>`,
+  `<img src="assets/lfg.png" alt="">`,
+  `<span class="vtext fire">LOCKED IN</span>`,
+  `<span class="spark">✻</span>`,
+  `<span class="vtext fire">NO MERCY</span>`,
+  `<span class="prompt">$ claude</span>`,
+  `<img src="assets/lfg.png" alt="">`,
+  `<span class="vtext fire">MORE TOKENS</span>`,
+  `<span class="spark">✻</span>`,
+  `<span class="vtext fire">LFG</span>`,
+].join("");
+document.querySelectorAll(".rail-track").forEach(t => t.innerHTML = RAIL + RAIL); // doubled for seamless loop
 
 const TAPE = [
   "THE CACHE NEVER SLEEPS", "REST IS FOR THE RATE-LIMITED", "SLEEP IS A SKILL ISSUE",
