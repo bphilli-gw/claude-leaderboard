@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inline data/*.json into template.html and write dashboard.html."""
+"""Inline data/*.json into template.html and write index.html."""
 
 import json
 from pathlib import Path
@@ -18,5 +18,5 @@ marker = "/*__DATA__*/[]"
 if marker not in template:
     raise SystemExit("template.html is missing the /*__DATA__*/[] marker")
 html = template.replace(marker, json.dumps(data, separators=(",", ":")))
-(ROOT / "dashboard.html").write_text(html)
-print(f"Wrote dashboard.html ({len(data)} users)")
+(ROOT / "index.html").write_text(html)
+print(f"Wrote index.html ({len(data)} users)")

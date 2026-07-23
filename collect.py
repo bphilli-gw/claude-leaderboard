@@ -8,7 +8,7 @@ content ever leave your machine.
 
 Usage:
     python3 collect.py            # write your data file
-    python3 collect.py --push     # also rebuild dashboard.html, commit, push
+    python3 collect.py --push     # also rebuild index.html, commit, push
 
 Stdlib only. Requires `gh` (for your GitHub username) or pass --user.
 """
@@ -126,7 +126,7 @@ def main():
     if args.push:
         subprocess.run([sys.executable, str(REPO_ROOT / "build.py")], check=True)
         subprocess.run(["git", "-C", str(REPO_ROOT), "pull", "--rebase", "--autostash", "--quiet"], check=True)
-        subprocess.run(["git", "-C", str(REPO_ROOT), "add", "data", "dashboard.html"], check=True)
+        subprocess.run(["git", "-C", str(REPO_ROOT), "add", "data", "index.html"], check=True)
         diff = subprocess.run(["git", "-C", str(REPO_ROOT), "diff", "--cached", "--quiet"])
         if diff.returncode == 0:
             print("No changes to push.")

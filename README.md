@@ -8,9 +8,11 @@ Only daily aggregates: token counts by model, and session counts per day. The co
 
 Two known gaps: Cowork usage isn't counted (it doesn't write these local logs), and history only goes back as far as your local logs do (Claude Code prunes old sessions).
 
+**This repo is public** so the dashboard can live on GitHub Pages. Joining means your GitHub handle and daily token totals are visible on the open internet. If you're not comfortable with that, don't join (or ask Brendan about a pseudonym).
+
 ## Join in
 
-You need Python 3 and the `gh` CLI (which you have if you set up GitHub via the givewell-gws-setup installers).
+You need Python 3 and the `gh` CLI (most GiveWell staff already have both from the GitHub setup).
 
 ```bash
 git clone https://github.com/bphilli-gw/claude-leaderboard.git
@@ -22,11 +24,7 @@ That's it. Run `python3 collect.py --push` again whenever you want to update you
 
 ## View the dashboard
 
-```bash
-git pull && open dashboard.html
-```
-
-`dashboard.html` is rebuilt and committed on every `--push`, so it always reflects the latest data in the repo.
+Live at **https://bphilli-gw.github.io/claude-leaderboard/** (updates a minute or so after each push). Or locally: `git pull && open index.html`. `index.html` is rebuilt and committed on every `--push`.
 
 ## How the numbers are computed
 
