@@ -30,7 +30,18 @@
     font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
     padding: 32px 20px 64px;
   }
-  .wrap { max-width: 960px; margin: 0 auto; }
+  .wrap { max-width: 960px; margin: 0 auto; position: relative; z-index: 1; }
+
+  /* the goomba troop: roams the page background, behind the board */
+  .goombas { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .goomba { position: absolute; left: 0; animation: troop-r var(--t) linear infinite; animation-delay: var(--dl); }
+  .goomba.rev { animation-name: troop-l; }
+  .goomba svg, .goomba-still svg { display: block; shape-rendering: crispEdges;
+    animation: waddle 0.5s linear infinite; transform-origin: 50% 100%; }
+  @keyframes troop-r { from { transform: translateX(-90px); } to { transform: translateX(calc(100vw + 90px)); } }
+  @keyframes troop-l { from { transform: translateX(calc(100vw + 90px)); } to { transform: translateX(-90px); } }
+  @keyframes waddle { 0%, 49.99% { transform: rotate(-6deg); } 50%, 100% { transform: rotate(6deg); } }
+  @media (prefers-reduced-motion: reduce) { .goombas { display: none; } }
   header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
   .brand { display: flex; align-items: center; gap: 14px; }
   .mark { flex: none; width: 60px; height: 60px; image-rendering: pixelated;
@@ -152,6 +163,7 @@
 </style>
 </head>
 <body>
+<div class="goombas" aria-hidden="true" id="goombas"></div>
 <div class="rail rail-l" aria-hidden="true"><div class="rail-track"></div></div>
 <div class="rail rail-r" aria-hidden="true"><div class="rail-track"></div></div>
 <div class="wrap">
@@ -413,21 +425,49 @@ function render(nDays) {
     <th class="num">Total</th><th class="num">Sessions</th></tr></thead><tbody>${dtRows}</tbody></table>`;
 }
 
+// --- the claude goomba: pixel menace, hand-placed rects, 16x13 grid ---
+function goomba(size) {
+  const P = [ // [x, y, w, h, fill]
+    [1,11,5,2,"#4a2417"], [10,11,5,2,"#4a2417"],                      // feet
+    [6,0,4,1,"#da7756"], [5,1,6,1,"#da7756"], [4,2,8,1,"#da7756"],    // dome
+    [3,3,10,1,"#da7756"], [2,4,12,2,"#da7756"], [1,6,14,3,"#da7756"],
+    [2,9,12,1,"#da7756"], [3,10,10,1,"#b85c3e"],                      // body + shaded base
+    [7,1,2,3,"#ffe9d5"], [6,2,4,1,"#ffe9d5"],                         // forehead spark
+    [3,5,3,3,"#ffffff"], [10,5,3,3,"#ffffff"],                        // eyes
+    [5,6,1,2,"#0b0b0b"], [10,6,1,2,"#0b0b0b"],                        // pupils
+    [3,4,3,1,"#3a1f14"], [10,4,3,1,"#3a1f14"],                        // brows
+    [6,5,1,1,"#3a1f14"], [9,5,1,1,"#3a1f14"],                         // brow slant
+    [4,9,8,1,"#3a1f14"], [5,9,1,1,"#ffffff"], [10,9,1,1,"#ffffff"],   // mouth + fangs
+  ];
+  return `<svg viewBox="0 0 16 13" width="${size}" height="${Math.round(size*13/16)}">` +
+    P.map(([x,y,w,h,f]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}"/>`).join("") + `</svg>`;
+}
+
+// roaming troop behind the board: [top, travel seconds, delay, size, reversed]
+const TROOP = [
+  ["10%", 38, -6, 30, false], ["28%", 55, -30, 24, true], ["48%", 46, -14, 34, false],
+  ["66%", 62, -40, 26, true], ["84%", 42, -20, 40, false], ["93%", 70, -52, 22, true],
+];
+document.getElementById("goombas").innerHTML = TROOP.map(([top, t, dl, s, rev]) =>
+  `<div class="goomba${rev ? " rev" : ""}" style="top:${top};--t:${t}s;--dl:${dl}s">${goomba(s)}</div>`).join("");
+
 // --- side rails: grind art for the wide-screen faithful ---
 const RAIL = [
   `<img src="assets/lfg.png" alt="">`,
   `<span class="vtext fire">GRIND</span>`,
-  `<span class="spark">✻</span>`,
+  `<span class="goomba-still">${goomba(34)}</span>`,
   `<span class="prompt">&gt;_</span>`,
   `<span class="vtext fire">BURN</span>`,
   `<img src="assets/lfg.png" alt="">`,
   `<span class="vtext fire">LOCKED IN</span>`,
   `<span class="spark">✻</span>`,
+  `<span class="goomba-still">${goomba(28)}</span>`,
   `<span class="vtext fire">NO MERCY</span>`,
   `<span class="prompt">$ claude</span>`,
   `<img src="assets/lfg.png" alt="">`,
   `<span class="vtext fire">MORE TOKENS</span>`,
   `<span class="spark">✻</span>`,
+  `<span class="goomba-still">${goomba(40)}</span>`,
   `<span class="vtext fire">LFG</span>`,
 ].join("");
 document.querySelectorAll(".rail-track").forEach(t => t.innerHTML = RAIL + RAIL); // doubled for seamless loop
