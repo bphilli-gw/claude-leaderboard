@@ -10,9 +10,20 @@ Two known gaps: Cowork usage isn't counted (it doesn't write these local logs), 
 
 **This repo is public** so the dashboard can live on GitHub Pages. Joining means your GitHub handle and daily token totals are visible on the open internet. If you're not comfortable with that, don't join (or ask Brendan about a pseudonym).
 
-## Join in
+## Join in (the plugin way — recommended)
 
-You need Python 3 and the `gh` CLI (most GiveWell staff already have both from the GitHub setup).
+In Claude Code:
+
+```
+/plugin marketplace add bphilli-gw/claude-leaderboard
+/plugin install claude-leaderboard@claude-leaderboard
+```
+
+Restart Claude Code, then run `/leaderboard` and say you want to join. It handles setup and your first push, and from then on the plugin auto-pushes your daily totals (at most once a day, silently, when a session ends). You never think about it again. The grind simply accrues.
+
+You'll also need push access: send Brendan your GitHub handle on Slack. You need Python 3 and the `gh` CLI (most GiveWell staff already have both from the GitHub setup).
+
+## Join in (the manual way)
 
 ```bash
 git clone https://github.com/bphilli-gw/claude-leaderboard.git
@@ -20,7 +31,7 @@ cd claude-leaderboard
 python3 collect.py --push
 ```
 
-That's it. Run `python3 collect.py --push` again whenever you want to update your numbers (end of day works well). To automate it, add a daily launchd/cron job, or ask Claude Code to set one up for you.
+Run `python3 collect.py --push` again whenever you want to update your numbers.
 
 ## View the dashboard
 

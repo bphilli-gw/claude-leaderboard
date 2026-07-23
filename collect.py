@@ -124,17 +124,27 @@ def main():
     print(f"Wrote {dest.relative_to(REPO_ROOT)}: {len(days)} active days, {total:,} total tokens")
 
     if args.push:
-        subprocess.run([sys.executable, str(REPO_ROOT / "build.py")], check=True)
-        subprocess.run(["git", "-C", str(REPO_ROOT), "pull", "--rebase", "--autostash", "--quiet"], check=True)
-        subprocess.run(["git", "-C", str(REPO_ROOT), "add", "data", "index.html"], check=True)
-        diff = subprocess.run(["git", "-C", str(REPO_ROOT), "diff", "--cached", "--quiet"])
+        # Only data/ is committed; the dashboard is rebuilt by the Pages workflow,
+        # so concurrent pushers can never conflict (each touches only their own file).
+        subprocess.run([sys.executable, str(REPO_ROOT / "build.py")], check=True)  # local convenience copy
+        git = ["git", "-C", str(REPO_ROOT)]
+        ident = subprocess.run(git + ["config", "user.email"], capture_output=True, text=True)
+        if not ident.stdout.strip():
+            subprocess.run(git + ["config", "user.name", user], check=True)
+            subprocess.run(git + ["config", "user.email", f"{user}@users.noreply.github.com"], check=True)
+        subprocess.run(git + ["pull", "--rebase", "--autostash", "--quiet"], check=True)
+        subprocess.run(git + ["add", "data"], check=True)
+        diff = subprocess.run(git + ["diff", "--cached", "--quiet"])
         if diff.returncode == 0:
             print("No changes to push.")
             return
-        subprocess.run(["git", "-C", str(REPO_ROOT), "commit", "--quiet",
-                        "-m", f"Update {user} usage data"], check=True)
-        subprocess.run(["git", "-C", str(REPO_ROOT), "push", "--quiet"], check=True)
-        print("Pushed.")
+        subprocess.run(git + ["commit", "--quiet", "-m", f"Update {user} usage data"], check=True)
+        for attempt in (1, 2, 3):
+            if subprocess.run(git + ["push", "--quiet"]).returncode == 0:
+                print("Pushed.")
+                return
+            subprocess.run(git + ["pull", "--rebase", "--autostash", "--quiet"], check=True)
+        sys.exit("Push failed after retries. If it's a 403, ask Brendan for push access.")
 
 
 if __name__ == "__main__":

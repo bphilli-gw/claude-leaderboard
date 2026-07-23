@@ -1,0 +1,9 @@
+{
+  "name": "claude-leaderboard",
+  "version": "1.0.0",
+  "description": "GiveWell Claude Leaderboard (ABSOLUTE GRINDSET EDITION): /leaderboard to join, plus a daily auto-push of your token totals. Only daily aggregates leave your machine.",
+  "author": {
+    "name": "Brendan Phillips",
+    "email": "brendan.phillips@givewell.org"
+  }
+}
