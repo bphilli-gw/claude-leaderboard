@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Leaderboard</title>
+<style>
+  :root {
+    --surface-1: #fcfcfb; --page: #f9f9f7;
+    --ink-1: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+    --grid: #e1e0d9; --baseline: #c3c2b7; --ring: rgba(11,11,11,0.10);
+    --m-fable: #2a78d6; --m-opus: #1baf7a; --m-sonnet: #eda100;
+    --m-haiku: #008300; --m-other: #898781;
+    --spark: #2a78d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --surface-1: #1a1a19; --page: #0d0d0d;
+      --ink-1: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+      --grid: #2c2c2a; --baseline: #383835; --ring: rgba(255,255,255,0.10);
+      --m-fable: #3987e5; --m-opus: #199e70; --m-sonnet: #c98500;
+      --m-haiku: #008300; --m-other: #898781;
+      --spark: #3987e5;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--page); color: var(--ink-1);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding: 32px 20px 64px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
+  .sub { color: var(--ink-2); font-size: 13px; margin-top: 4px; }
+  .updated { color: var(--muted); font-size: 12px; }
+
+  .range { display: flex; gap: 4px; margin: 20px 0 16px; }
+  .range button {
+    font: 600 13px system-ui, sans-serif; color: var(--ink-2);
+    background: none; border: 1px solid transparent; border-radius: 8px;
+    padding: 5px 12px; cursor: pointer;
+  }
+  .range button:hover { background: var(--surface-1); }
+  .range button[aria-pressed="true"] {
+    background: var(--surface-1); color: var(--ink-1); border-color: var(--ring);
+  }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .tile {
+    background: var(--surface-1); border: 1px solid var(--ring); border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .tile .label { color: var(--ink-2); font-size: 12px; font-weight: 600; }
+  .tile .value { font-size: 26px; font-weight: 650; letter-spacing: -0.01em; margin-top: 2px; }
+  .tile .hint { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+
+  .card {
+    background: var(--surface-1); border: 1px solid var(--ring); border-radius: 12px;
+    padding: 18px; margin-top: 16px;
+  }
+  .card h2 { font-size: 14px; font-weight: 650; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 12.5px; }
+  .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  #chart { margin-top: 10px; position: relative; }
+  #chart svg { display: block; width: 100%; height: auto; }
+  #chart text { font: 11px system-ui, sans-serif; font-variant-numeric: tabular-nums; fill: var(--muted); }
+
+  #tip {
+    position: absolute; pointer-events: none; display: none; z-index: 2;
+    background: var(--surface-1); border: 1px solid var(--ring); border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12); padding: 9px 12px; font-size: 12.5px; min-width: 150px;
+  }
+  #tip .d { font-weight: 650; margin-bottom: 4px; }
+  #tip .row { display: flex; justify-content: space-between; gap: 16px; color: var(--ink-2); }
+  #tip .row b { color: var(--ink-1); font-weight: 600; font-variant-numeric: tabular-nums; }
+  #tip i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 5px; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th { text-align: left; color: var(--ink-2); font-size: 12px; font-weight: 600;
+       padding: 6px 10px; border-bottom: 1px solid var(--grid); }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--grid); font-size: 13.5px; }
+  tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.rank { color: var(--muted); width: 28px; }
+  td.user { font-weight: 600; }
+  .streak { color: var(--ink-2); }
+  .spark svg { display: block; }
+
+  details { margin-top: 16px; }
+  summary { cursor: pointer; color: var(--ink-2); font-size: 13px; font-weight: 600; }
+  #daily table { font-size: 12.5px; }
+  footer { color: var(--muted); font-size: 12px; margin-top: 24px; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Claude Leaderboard</h1>
+      <div class="sub">Opt-in Claude Code usage at GiveWell. Tokens are volume, not value &mdash; bragging rights only.</div>
+    </div>
+    <div class="updated" id="updated"></div>
+  </header>
+
+  <div class="range" role="group" aria-label="Date range">
+    <button data-days="7">Last 7 days</button>
+    <button data-days="30" aria-pressed="true">Last 30 days</button>
+    <button data-days="0">All time</button>
+  </div>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="card">
+    <h2>Tokens per day, by model</h2>
+    <div class="legend" id="legend"></div>
+    <div id="chart"><div id="tip"></div></div>
+  </div>
+
+  <div class="card">
+    <h2>Leaderboard</h2>
+    <table id="board" aria-label="Leaderboard">
+      <thead><tr>
+        <th></th><th>User</th>
+        <th class="num">Tokens</th><th class="num">Output</th>
+        <th class="num">Sessions</th><th class="num">Active days</th>
+        <th class="num">Streak</th><th>Last 30 days</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <details id="daily">
+    <summary>Daily numbers (table view)</summary>
+    <div class="card"></div>
+  </details>
+
+  <footer>Data = daily token totals only, aggregated locally from each person's own Claude Code logs.
+    Prompts, code, and conversations never leave anyone's machine. Join in: see the README.</footer>
+</div>
+
+<script>
+const DATA = /*__DATA__*/[];
+
+const FAMILIES = [
+  { key: "fable",  label: "Fable",  match: /fable/i,  color: "var(--m-fable)"  },
+  { key: "opus",   label: "Opus",   match: /opus/i,   color: "var(--m-opus)"   },
+  { key: "sonnet", label: "Sonnet", match: /sonnet/i, color: "var(--m-sonnet)" },
+  { key: "haiku",  label: "Haiku",  match: /haiku/i,  color: "var(--m-haiku)"  },
+  { key: "other",  label: "Other",  match: /./,       color: "var(--m-other)"  },
+];
+const fam = m => FAMILIES.find(f => f.match.test(m)).key;
+const famColor = k => FAMILIES.find(f => f.key === k).color;
+const tokSum = t => (t.in||0) + (t.out||0) + (t.cc||0) + (t.cr||0);
+
+function fmt(n) {
+  if (n >= 1e9) return (n/1e9).toFixed(n < 1e10 ? 1 : 0) + "B";
+  if (n >= 1e6) return (n/1e6).toFixed(n < 1e7 ? 1 : 0) + "M";
+  if (n >= 1e3) return (n/1e3).toFixed(n < 1e4 ? 1 : 0) + "k";
+  return String(n);
+}
+const iso = d => d.toISOString().slice(0,10);
+function localToday() {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+function dateRange(from, to) {
+  const out = [];
+  for (let d = new Date(from); d <= to; d.setDate(d.getDate()+1)) out.push(iso(d));
+  return out;
+}
+function parseDay(s) { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); }
+
+function windowDays(nDays) {
+  const today = localToday();
+  let from;
+  if (nDays > 0) { from = new Date(today); from.setDate(from.getDate() - (nDays-1)); }
+  else {
+    const all = DATA.flatMap(u => Object.keys(u.days));
+    from = all.length ? parseDay(all.sort()[0]) : today;
+  }
+  return dateRange(from, today);
+}
+
+function streak(u) {
+  const days = new Set(Object.keys(u.days));
+  const today = localToday();
+  let d = new Date(today), n = 0;
+  if (!days.has(iso(d))) d.setDate(d.getDate()-1);   // today not over yet
+  while (days.has(iso(d))) { n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+
+function userStats(u, days) {
+  const s = { tokens: 0, out: 0, sessions: 0, active: 0 };
+  for (const d of days) {
+    const rec = u.days[d];
+    if (!rec) continue;
+    s.active++; s.sessions += rec.sessions || 0;
+    for (const t of Object.values(rec.models)) { s.tokens += tokSum(t); s.out += t.out||0; }
+  }
+  return s;
+}
+
+function sparkline(u) {
+  const days = windowDays(30);
+  const vals = days.map(d => {
+    const rec = u.days[d];
+    return rec ? Object.values(rec.models).reduce((a,t) => a + tokSum(t), 0) : 0;
+  });
+  const W = 120, H = 28, max = Math.max(...vals, 1);
+  const pts = vals.map((v,i) =>
+    (i/(vals.length-1)*W).toFixed(1) + "," + (H - 2 - v/max*(H-4)).toFixed(1));
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="daily tokens, last 30 days">
+    <polyline points="${pts.join(" ")}" fill="none" stroke="var(--spark)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+
+function render(nDays) {
+  const days = windowDays(nDays);
+  const label = nDays ? `last ${nDays} days` : "all time";
+
+  // --- tiles ---
+  let tokens = 0, out = 0;
+  const activeUsers = new Set();
+  for (const u of DATA) {
+    const s = userStats(u, days);
+    tokens += s.tokens; out += s.out;
+    if (s.active) activeUsers.add(u.user);
+  }
+  const bestStreak = DATA.map(u => ({u: u.user, n: streak(u)})).sort((a,b) => b.n - a.n)[0] || {u:"–",n:0};
+  document.getElementById("tiles").innerHTML = `
+    <div class="tile"><div class="label">Total tokens</div><div class="value">${fmt(tokens)}</div><div class="hint">${label}</div></div>
+    <div class="tile"><div class="label">Output tokens</div><div class="value">${fmt(out)}</div><div class="hint">${label}</div></div>
+    <div class="tile"><div class="label">Active players</div><div class="value">${activeUsers.size}</div><div class="hint">${label}</div></div>
+    <div class="tile"><div class="label">Longest live streak</div><div class="value">${bestStreak.n}d</div><div class="hint">${bestStreak.n ? bestStreak.u : "no live streaks"}</div></div>`;
+
+  // --- stacked daily bars by model family ---
+  const perDay = days.map(d => {
+    const fams = {}; let sessions = 0;
+    for (const u of DATA) {
+      const rec = u.days[d];
+      if (!rec) continue;
+      sessions += rec.sessions || 0;
+      for (const [m,t] of Object.entries(rec.models)) fams[fam(m)] = (fams[fam(m)]||0) + tokSum(t);
+    }
+    return { d, fams, sessions, total: Object.values(fams).reduce((a,b)=>a+b,0) };
+  });
+  const famsPresent = FAMILIES.filter(f => perDay.some(p => p.fams[f.key]));
+  document.getElementById("legend").innerHTML = famsPresent
+    .map(f => `<span><i style="background:${f.color}"></i>${f.label}</span>`).join("");
+
+  const W = 920, H = 240, padL = 44, padB = 22, padT = 8;
+  const max = Math.max(...perDay.map(p => p.total), 1);
+  const innerW = W - padL - 8, innerH = H - padT - padB;
+  const bw = Math.min(28, Math.max(3, innerW/perDay.length - 2));
+  const step = innerW / perDay.length;
+  const y = v => padT + innerH - v/max*innerH;
+
+  const ticks = [0, 0.5, 1].map(f => Math.round(max*f));
+  let svg = ticks.map(t =>
+    `<line x1="${padL}" x2="${W-8}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)" stroke-width="1"/>
+     <text x="${padL-6}" y="${y(t)+4}" text-anchor="end">${fmt(t)}</text>`).join("");
+
+  perDay.forEach((p,i) => {
+    const x = padL + i*step + (step-bw)/2;
+    let acc = 0;
+    const segs = famsPresent.filter(f => p.fams[f.key]);
+    segs.forEach((f, si) => {
+      const v = p.fams[f.key];
+      const y1 = y(acc + v), h = Math.max(y(acc) - y(acc+v) - (si < segs.length-1 ? 2 : 0), 1);
+      const r = si === segs.length-1 ? Math.min(4, bw/2, h) : 0;
+      svg += `<path d="M${x} ${y1+h} V${y1+r} Q${x} ${y1} ${x+r} ${y1} H${x+bw-r} Q${x+bw} ${y1} ${x+bw} ${y1+r} V${y1+h} Z" fill="${f.color}"/>`;
+      acc += v;
+    });
+    // hover hit target = full column
+    svg += `<rect class="hit" data-i="${i}" x="${padL + i*step}" y="${padT}" width="${step}" height="${innerH}" fill="transparent"/>`;
+  });
+  svg += `<line x1="${padL}" x2="${W-8}" y1="${padT+innerH}" y2="${padT+innerH}" stroke="var(--baseline)" stroke-width="1"/>`;
+  const every = Math.ceil(perDay.length/8);
+  perDay.forEach((p,i) => {
+    if (i % every) return;
+    const [,m,dd] = p.d.split("-");
+    svg += `<text x="${padL + i*step + step/2}" y="${H-6}" text-anchor="middle">${+m}/${+dd}</text>`;
+  });
+  const chart = document.getElementById("chart");
+  chart.innerHTML = `<div id="tip"></div><svg viewBox="0 0 ${W} ${H}" aria-label="daily tokens by model">${svg}</svg>`;
+
+  const tip = chart.querySelector("#tip");
+  chart.querySelectorAll(".hit").forEach(r => {
+    r.addEventListener("mousemove", e => {
+      const p = perDay[+r.dataset.i];
+      const rows = FAMILIES.filter(f => p.fams[f.key])
+        .map(f => `<div class="row"><span><i style="background:${f.color}"></i>${f.label}</span><b>${fmt(p.fams[f.key])}</b></div>`).join("");
+      tip.innerHTML = `<div class="d">${p.d}</div>${rows || '<div class="row"><span>no usage</span></div>'}
+        <div class="row"><span>Total</span><b>${fmt(p.total)}</b></div>
+        <div class="row"><span>Sessions</span><b>${p.sessions}</b></div>`;
+      const box = chart.getBoundingClientRect();
+      tip.style.display = "block";
+      let tx = e.clientX - box.left + 14;
+      if (tx + 180 > box.width) tx = e.clientX - box.left - 190;
+      tip.style.left = tx + "px";
+      tip.style.top = (e.clientY - box.top - 10) + "px";
+    });
+    r.addEventListener("mouseleave", () => tip.style.display = "none");
+  });
+
+  // --- leaderboard table ---
+  const rows = DATA.map(u => ({ u, s: userStats(u, days), streak: streak(u) }))
+    .sort((a,b) => b.s.tokens - a.s.tokens);
+  document.querySelector("#board tbody").innerHTML = rows.map((r,i) => `
+    <tr>
+      <td class="rank">${i+1}</td>
+      <td class="user">${r.u.user}</td>
+      <td class="num">${fmt(r.s.tokens)}</td>
+      <td class="num">${fmt(r.s.out)}</td>
+      <td class="num">${r.s.sessions}</td>
+      <td class="num">${r.s.active}</td>
+      <td class="num streak">${r.streak ? r.streak + "d 🔥" : "–"}</td>
+      <td class="spark">${sparkline(r.u)}</td>
+    </tr>`).join("");
+
+  // --- daily table view ---
+  const dtRows = perDay.filter(p => p.total).map(p => {
+    const cells = famsPresent.map(f => `<td class="num">${p.fams[f.key] ? fmt(p.fams[f.key]) : "–"}</td>`).join("");
+    return `<tr><td>${p.d}</td>${cells}<td class="num">${fmt(p.total)}</td><td class="num">${p.sessions}</td></tr>`;
+  }).join("");
+  document.querySelector("#daily .card").innerHTML = `
+    <table><thead><tr><th>Date</th>${famsPresent.map(f=>`<th class="num">${f.label}</th>`).join("")}
+    <th class="num">Total</th><th class="num">Sessions</th></tr></thead><tbody>${dtRows}</tbody></table>`;
+}
+
+const updated = DATA.map(u => u.updated).sort().pop();
+document.getElementById("updated").textContent = updated ? "Updated " + updated.slice(0,16).replace("T"," ") : "";
+document.querySelectorAll(".range button").forEach(b => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".range button").forEach(x => x.setAttribute("aria-pressed", x === b));
+    render(+b.dataset.days);
+  });
+});
+render(30);
+</script>
+</body>
+</html>
