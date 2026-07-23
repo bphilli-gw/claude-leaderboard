@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Claude Leaderboard</title>
+<title>Claude Leaderboard — LOCK IN</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="%23ffd23f"/><stop offset=".55" stop-color="%23ff7a1a"/><stop offset="1" stop-color="%23e8422e"/></linearGradient></defs><path d="M32 63C20 56 16 49 19 42c2-5 6-7 6-7-1 5 3 7 3 7-2-8 4-14 4-14 0 6 5 9 7 13 3 6 0 15-7 22z" fill="url(%23f)"/><g transform="rotate(-8 32 24)"><rect x="14" y="5" width="36" height="36" rx="9" fill="%23d97757"/><g stroke="%23fff" stroke-width="4.6" stroke-linecap="round"><line x1="32" y1="12" x2="32" y2="34"/><line x1="21" y1="23" x2="43" y2="23"/><line x1="24.5" y1="15.5" x2="39.5" y2="30.5"/><line x1="39.5" y1="15.5" x2="24.5" y2="30.5"/></g></g><g stroke="%23ff7a1a" stroke-width="3" stroke-linecap="round"><line x1="2" y1="14" x2="10" y2="14"/><line x1="0" y1="24" x2="8" y2="24"/><line x1="3" y1="34" x2="9" y2="34"/></g></svg>'>
 <style>
   :root {
     --surface-1: #fcfcfb; --page: #f9f9f7;
@@ -30,7 +31,9 @@
     padding: 32px 20px 64px;
   }
   .wrap { max-width: 960px; margin: 0 auto; }
-  header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .mark { flex: none; }
   h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
   .sub { color: var(--ink-2); font-size: 13px; margin-top: 4px; }
   .updated { color: var(--muted); font-size: 12px; }
@@ -98,9 +101,27 @@
 <body>
 <div class="wrap">
   <header>
-    <div>
-      <h1>Claude Leaderboard</h1>
-      <div class="sub">Opt-in Claude Code usage at GiveWell. Tokens are volume, not value &mdash; bragging rights only.</div>
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 64 64" width="46" height="46" role="img" aria-label="Claude Code, but LFG">
+        <defs><linearGradient id="fire" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffd23f"/><stop offset=".55" stop-color="#ff7a1a"/><stop offset="1" stop-color="#e8422e"/>
+        </linearGradient></defs>
+        <path d="M32 63C20 56 16 49 19 42c2-5 6-7 6-7-1 5 3 7 3 7-2-8 4-14 4-14 0 6 5 9 7 13 3 6 0 15-7 22z" fill="url(#fire)"/>
+        <g transform="rotate(-8 32 24)">
+          <rect x="14" y="5" width="36" height="36" rx="9" fill="#d97757"/>
+          <g stroke="#fff" stroke-width="4.6" stroke-linecap="round">
+            <line x1="32" y1="12" x2="32" y2="34"/><line x1="21" y1="23" x2="43" y2="23"/>
+            <line x1="24.5" y1="15.5" x2="39.5" y2="30.5"/><line x1="39.5" y1="15.5" x2="24.5" y2="30.5"/>
+          </g>
+        </g>
+        <g stroke="#ff7a1a" stroke-width="3" stroke-linecap="round">
+          <line x1="2" y1="14" x2="10" y2="14"/><line x1="0" y1="24" x2="8" y2="24"/><line x1="3" y1="34" x2="9" y2="34"/>
+        </g>
+      </svg>
+      <div>
+        <h1>Claude Leaderboard</h1>
+        <div class="sub">Opt-in Claude Code workmaxxing at GiveWell. Lock in. Tokens are volume, not value &mdash; the grind is its own reward.</div>
+      </div>
     </div>
     <div class="updated" id="updated"></div>
   </header>
@@ -114,7 +135,7 @@
   <div class="tiles" id="tiles"></div>
 
   <div class="card">
-    <h2>Tokens per day, by model</h2>
+    <h2>Burn rate &mdash; tokens per day, by model</h2>
     <div class="legend" id="legend"></div>
     <div id="chart"><div id="tip"></div></div>
   </div>
@@ -185,11 +206,18 @@ function windowDays(nDays) {
 }
 
 function streak(u) {
+  // Weekends never break a streak (usage on them still counts). Grind is Mon-Fri.
   const days = new Set(Object.keys(u.days));
+  const isWeekend = d => d.getDay() === 0 || d.getDay() === 6;
   const today = localToday();
   let d = new Date(today), n = 0;
   if (!days.has(iso(d))) d.setDate(d.getDate()-1);   // today not over yet
-  while (days.has(iso(d))) { n++; d.setDate(d.getDate()-1); }
+  while (true) {
+    if (days.has(iso(d))) n++;
+    else if (!isWeekend(d)) break;                    // idle weekday = broken
+    d.setDate(d.getDate()-1);
+    if (n === 0 && today - d > 4*86400e3) break;      // no anchor within grace
+  }
   return n;
 }
 
@@ -231,10 +259,10 @@ function render(nDays) {
   }
   const bestStreak = DATA.map(u => ({u: u.user, n: streak(u)})).sort((a,b) => b.n - a.n)[0] || {u:"–",n:0};
   document.getElementById("tiles").innerHTML = `
-    <div class="tile"><div class="label">Total tokens</div><div class="value">${fmt(tokens)}</div><div class="hint">${label}</div></div>
-    <div class="tile"><div class="label">Output tokens</div><div class="value">${fmt(out)}</div><div class="hint">${label}</div></div>
-    <div class="tile"><div class="label">Active players</div><div class="value">${activeUsers.size}</div><div class="hint">${label}</div></div>
-    <div class="tile"><div class="label">Longest live streak</div><div class="value">${bestStreak.n}d</div><div class="hint">${bestStreak.n ? bestStreak.u : "no live streaks"}</div></div>`;
+    <div class="tile"><div class="label">Tokens burned</div><div class="value">${fmt(tokens)}</div><div class="hint">${label}</div></div>
+    <div class="tile"><div class="label">Output shipped</div><div class="value">${fmt(out)}</div><div class="hint">${label}</div></div>
+    <div class="tile"><div class="label">Locked in</div><div class="value">${activeUsers.size}</div><div class="hint">workmaxxer${activeUsers.size === 1 ? "" : "s"}, ${label}</div></div>
+    <div class="tile"><div class="label">Longest grind streak</div><div class="value">${bestStreak.n}d</div><div class="hint">${bestStreak.n ? bestStreak.u + " — certified" : "nobody is locked in. LFG"}</div></div>`;
 
   // --- stacked daily bars by model family ---
   const perDay = days.map(d => {
@@ -309,15 +337,16 @@ function render(nDays) {
   // --- leaderboard table ---
   const rows = DATA.map(u => ({ u, s: userStats(u, days), streak: streak(u) }))
     .sort((a,b) => b.s.tokens - a.s.tokens);
+  const fire = n => "🔥".repeat(Math.min(3, 1 + Math.floor(n/7)));
   document.querySelector("#board tbody").innerHTML = rows.map((r,i) => `
     <tr>
       <td class="rank">${i+1}</td>
-      <td class="user">${r.u.user}</td>
+      <td class="user">${r.u.user}${i === 0 && r.s.tokens ? " 👑" : ""}</td>
       <td class="num">${fmt(r.s.tokens)}</td>
       <td class="num">${fmt(r.s.out)}</td>
       <td class="num">${r.s.sessions}</td>
       <td class="num">${r.s.active}</td>
-      <td class="num streak">${r.streak ? r.streak + "d 🔥" : "–"}</td>
+      <td class="num streak">${r.streak ? r.streak + "d " + fire(r.streak) : "–"}</td>
       <td class="spark">${sparkline(r.u)}</td>
     </tr>`).join("");
 

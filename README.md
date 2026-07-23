@@ -31,4 +31,4 @@ Live at **https://bphilli-gw.github.io/claude-leaderboard/** (updates a minute o
 - **Tokens** = input + output + cache creation + cache reads (everything Claude processed for you). Cache reads dominate; that's normal for agentic sessions.
 - **Output** = tokens Claude generated, shown separately as the "real work" number.
 - **Sessions** = distinct Claude Code sessions with at least one response that day.
-- **Streak** = consecutive calendar days with any usage, ending today or yesterday. Weekends count against you. Git blame the scoreboard, not the referee.
+- **Streak** = consecutive days with any usage, ending today or yesterday. Weekends can't break you: an idle Saturday or Sunday is skipped, and weekend usage still counts. Only an idle weekday ends the grind. Git blame the scoreboard, not the referee.
