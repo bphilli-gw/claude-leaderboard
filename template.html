@@ -425,19 +425,15 @@ function render(nDays) {
     <th class="num">Total</th><th class="num">Sessions</th></tr></thead><tbody>${dtRows}</tbody></table>`;
 }
 
-// --- the claude goomba: pixel menace, hand-placed rects, 16x13 grid ---
+// --- the claude code goomba: pixel bug, hand-placed rects, 16x13 grid ---
 function goomba(size) {
+  const Y = "#f2d84b", BG = "var(--page)";
   const P = [ // [x, y, w, h, fill]
-    [1,11,5,2,"#4a2417"], [10,11,5,2,"#4a2417"],                      // feet
-    [6,0,4,1,"#da7756"], [5,1,6,1,"#da7756"], [4,2,8,1,"#da7756"],    // dome
-    [3,3,10,1,"#da7756"], [2,4,12,2,"#da7756"], [1,6,14,3,"#da7756"],
-    [2,9,12,1,"#da7756"], [3,10,10,1,"#b85c3e"],                      // body + shaded base
-    [7,1,2,3,"#ffe9d5"], [6,2,4,1,"#ffe9d5"],                         // forehead spark
-    [3,5,3,3,"#ffffff"], [10,5,3,3,"#ffffff"],                        // eyes
-    [5,6,1,2,"#0b0b0b"], [10,6,1,2,"#0b0b0b"],                        // pupils
-    [3,4,3,1,"#3a1f14"], [10,4,3,1,"#3a1f14"],                        // brows
-    [6,5,1,1,"#3a1f14"], [9,5,1,1,"#3a1f14"],                         // brow slant
-    [4,9,8,1,"#3a1f14"], [5,9,1,1,"#ffffff"], [10,9,1,1,"#ffffff"],   // mouth + fangs
+    [4,0,1,2,Y], [11,0,1,2,Y],                              // antennae
+    [2,2,12,7,Y],                                           // body
+    [0,4,2,1,Y], [14,4,2,1,Y],                              // side arms
+    [4,4,2,2,BG], [10,4,2,2,BG],                            // punched-out eyes
+    [2,10,2,3,Y], [5,10,2,3,Y], [9,10,2,3,Y], [12,10,2,3,Y], // legs
   ];
   return `<svg viewBox="0 0 16 13" width="${size}" height="${Math.round(size*13/16)}">` +
     P.map(([x,y,w,h,f]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}"/>`).join("") + `</svg>`;
@@ -445,8 +441,10 @@ function goomba(size) {
 
 // roaming troop behind the board: [top, travel seconds, delay, size, reversed]
 const TROOP = [
-  ["10%", 38, -6, 30, false], ["28%", 55, -30, 24, true], ["48%", 46, -14, 34, false],
-  ["66%", 62, -40, 26, true], ["84%", 42, -20, 40, false], ["93%", 70, -52, 22, true],
+  ["4%", 44, -8, 52, false], ["12%", 58, -33, 34, true], ["21%", 38, -5, 64, false],
+  ["30%", 66, -48, 30, true], ["39%", 47, -19, 46, false], ["48%", 55, -37, 72, true],
+  ["57%", 41, -11, 38, false], ["66%", 62, -50, 56, true], ["75%", 49, -26, 44, false],
+  ["84%", 70, -58, 66, true], ["90%", 43, -15, 36, false], ["95%", 59, -41, 58, true],
 ];
 document.getElementById("goombas").innerHTML = TROOP.map(([top, t, dl, s, rev]) =>
   `<div class="goomba${rev ? " rev" : ""}" style="top:${top};--t:${t}s;--dl:${dl}s">${goomba(s)}</div>`).join("");
@@ -455,19 +453,19 @@ document.getElementById("goombas").innerHTML = TROOP.map(([top, t, dl, s, rev]) 
 const RAIL = [
   `<img src="assets/lfg.png" alt="">`,
   `<span class="vtext fire">GRIND</span>`,
-  `<span class="goomba-still">${goomba(34)}</span>`,
+  `<span class="goomba-still">${goomba(52)}</span>`,
   `<span class="prompt">&gt;_</span>`,
   `<span class="vtext fire">BURN</span>`,
   `<img src="assets/lfg.png" alt="">`,
   `<span class="vtext fire">LOCKED IN</span>`,
   `<span class="spark">✻</span>`,
-  `<span class="goomba-still">${goomba(28)}</span>`,
+  `<span class="goomba-still">${goomba(44)}</span>`,
   `<span class="vtext fire">NO MERCY</span>`,
   `<span class="prompt">$ claude</span>`,
   `<img src="assets/lfg.png" alt="">`,
   `<span class="vtext fire">MORE TOKENS</span>`,
   `<span class="spark">✻</span>`,
-  `<span class="goomba-still">${goomba(40)}</span>`,
+  `<span class="goomba-still">${goomba(60)}</span>`,
   `<span class="vtext fire">LFG</span>`,
 ].join("");
 document.querySelectorAll(".rail-track").forEach(t => t.innerHTML = RAIL + RAIL); // doubled for seamless loop
