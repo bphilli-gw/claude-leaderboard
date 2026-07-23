@@ -425,17 +425,16 @@ function render(nDays) {
     <th class="num">Total</th><th class="num">Sessions</th></tr></thead><tbody>${dtRows}</tbody></table>`;
 }
 
-// --- the claude code goomba: pixel bug, hand-placed rects, 16x13 grid ---
+// --- clawd: geometry traced from the official sprite, 100x63 grid ---
 function goomba(size) {
-  const Y = "#f2d84b", BG = "var(--page)";
+  const O = "#f15c45", K = "#0f0f0e";
   const P = [ // [x, y, w, h, fill]
-    [4,0,1,2,Y], [11,0,1,2,Y],                              // antennae
-    [2,2,12,7,Y],                                           // body
-    [0,4,2,1,Y], [14,4,2,1,Y],                              // side arms
-    [4,4,2,2,BG], [10,4,2,2,BG],                            // punched-out eyes
-    [2,10,2,3,Y], [5,10,2,3,Y], [9,10,2,3,Y], [12,10,2,3,Y], // legs
+    [18,0,66,47,O],                                             // body
+    [2,15,96,16,O],                                             // arms
+    [27,7,8,9,K], [66,7,8,9,K],                                 // eyes
+    [18,47,9,16,O], [36,47,8,16,O], [59,47,8,16,O], [75,47,9,16,O], // legs
   ];
-  return `<svg viewBox="0 0 16 13" width="${size}" height="${Math.round(size*13/16)}">` +
+  return `<svg viewBox="0 0 100 63" width="${size}" height="${Math.round(size*63/100)}">` +
     P.map(([x,y,w,h,f]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}"/>`).join("") + `</svg>`;
 }
 
