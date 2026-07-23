@@ -1,4 +1,4 @@
-# Claude Leaderboard
+# Claude Leaderboard — ABSOLUTE GRINDSET EDITION
 
 An opt-in, straude-style leaderboard for Claude Code usage at GiveWell. Daily token totals, streaks, and a dashboard. Tokens are volume, not value; this is for fun and bragging rights, not performance measurement.
 

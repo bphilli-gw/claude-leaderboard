@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Claude Leaderboard — LOCK IN</title>
-<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="%23ffd23f"/><stop offset=".55" stop-color="%23ff7a1a"/><stop offset="1" stop-color="%23e8422e"/></linearGradient></defs><path d="M32 63C20 56 16 49 19 42c2-5 6-7 6-7-1 5 3 7 3 7-2-8 4-14 4-14 0 6 5 9 7 13 3 6 0 15-7 22z" fill="url(%23f)"/><g transform="rotate(-8 32 24)"><rect x="14" y="5" width="36" height="36" rx="9" fill="%23d97757"/><g stroke="%23fff" stroke-width="4.6" stroke-linecap="round"><line x1="32" y1="12" x2="32" y2="34"/><line x1="21" y1="23" x2="43" y2="23"/><line x1="24.5" y1="15.5" x2="39.5" y2="30.5"/><line x1="39.5" y1="15.5" x2="24.5" y2="30.5"/></g></g><g stroke="%23ff7a1a" stroke-width="3" stroke-linecap="round"><line x1="2" y1="14" x2="10" y2="14"/><line x1="0" y1="24" x2="8" y2="24"/><line x1="3" y1="34" x2="9" y2="34"/></g></svg>'>
+<title>CLAUDE LEADERBOARD — ABSOLUTE GRINDSET EDITION</title>
+<link rel="icon" href="assets/lfg.png">
 <style>
   :root {
     --surface-1: #fcfcfb; --page: #f9f9f7;
@@ -33,8 +33,42 @@
   .wrap { max-width: 960px; margin: 0 auto; }
   header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
   .brand { display: flex; align-items: center; gap: 14px; }
-  .mark { flex: none; }
-  h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
+  .mark { flex: none; width: 60px; height: 60px; image-rendering: pixelated;
+          border-radius: 14px; animation: rage 0.9s ease-in-out infinite; }
+  @keyframes rage { 0%,100% { transform: rotate(-4deg) scale(1); } 50% { transform: rotate(4deg) scale(1.08); } }
+
+  .banner { width: 100%; border-radius: 14px; border: 1px solid var(--ring); display: block; margin-bottom: 20px; }
+  .fire {
+    background: linear-gradient(180deg, #e8730a 0%, #e04a12 60%, #c22f2f 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  @media (prefers-color-scheme: dark) {
+    .fire {
+      background: linear-gradient(180deg, #ffd23f 0%, #ff7a1a 55%, #e8422e 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      text-shadow: 0 0 24px rgba(255,122,26,0.35);
+    }
+  }
+  .badge {
+    display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: 0.08em;
+    color: #fff; background: linear-gradient(90deg, #e8422e, #ff7a1a);
+    border-radius: 6px; padding: 2px 8px; vertical-align: 3px; margin-left: 8px;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+  .ticker { overflow: hidden; white-space: nowrap; border-block: 1px solid var(--ring);
+            margin-top: 18px; padding: 7px 0; font-size: 12.5px; font-weight: 800;
+            letter-spacing: 0.06em; }
+  .ticker span { display: inline-block; animation: scroll 40s linear infinite; }
+  @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .ticker b { color: #ff7a1a; margin: 0 14px; }
+
+  .quote { margin-top: 16px; color: var(--ink-2); font-size: 13px; font-style: italic; text-align: center; }
+  .title-tag { display: block; font-size: 11px; font-weight: 800; letter-spacing: 0.14em; color: #ff7a1a; }
+  td .rank-title { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; color: #ff7a1a; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  h1 { font-size: 25px; font-weight: 800; letter-spacing: 0.01em; }
   .sub { color: var(--ink-2); font-size: 13px; margin-top: 4px; }
   .updated { color: var(--muted); font-size: 12px; }
 
@@ -100,66 +134,56 @@
 </head>
 <body>
 <div class="wrap">
+  <img class="banner" src="assets/banner.jpg" alt="A coder achieving terminal velocity. CLAUDE CODE. LFG!">
   <header>
     <div class="brand">
-      <svg class="mark" viewBox="0 0 64 64" width="46" height="46" role="img" aria-label="Claude Code, but LFG">
-        <defs><linearGradient id="fire" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#ffd23f"/><stop offset=".55" stop-color="#ff7a1a"/><stop offset="1" stop-color="#e8422e"/>
-        </linearGradient></defs>
-        <path d="M32 63C20 56 16 49 19 42c2-5 6-7 6-7-1 5 3 7 3 7-2-8 4-14 4-14 0 6 5 9 7 13 3 6 0 15-7 22z" fill="url(#fire)"/>
-        <g transform="rotate(-8 32 24)">
-          <rect x="14" y="5" width="36" height="36" rx="9" fill="#d97757"/>
-          <g stroke="#fff" stroke-width="4.6" stroke-linecap="round">
-            <line x1="32" y1="12" x2="32" y2="34"/><line x1="21" y1="23" x2="43" y2="23"/>
-            <line x1="24.5" y1="15.5" x2="39.5" y2="30.5"/><line x1="39.5" y1="15.5" x2="24.5" y2="30.5"/>
-          </g>
-        </g>
-        <g stroke="#ff7a1a" stroke-width="3" stroke-linecap="round">
-          <line x1="2" y1="14" x2="10" y2="14"/><line x1="0" y1="24" x2="8" y2="24"/><line x1="3" y1="34" x2="9" y2="34"/>
-        </g>
-      </svg>
+      <img class="mark" src="assets/lfg.png" alt="The LFG emoji, mid-scream, Claude starburst on its forehead">
       <div>
-        <h1>Claude Leaderboard</h1>
-        <div class="sub">Opt-in Claude Code workmaxxing at GiveWell. Lock in. Tokens are volume, not value &mdash; the grind is its own reward.</div>
+        <h1><span class="fire">CLAUDE LEADERBOARD</span><span class="badge">ABSOLUTE GRINDSET EDITION</span></h1>
+        <div class="sub">Opt-in Claude Code workmaxxing at GiveWell. Tokens are volume, not value. The volume is ENORMOUS. LFG.</div>
       </div>
     </div>
     <div class="updated" id="updated"></div>
   </header>
 
+  <div class="ticker" aria-hidden="true"><span id="tickertape"></span></div>
+
   <div class="range" role="group" aria-label="Date range">
-    <button data-days="7">Last 7 days</button>
-    <button data-days="30" aria-pressed="true">Last 30 days</button>
-    <button data-days="0">All time</button>
+    <button data-days="7">7 DAYS OF PAIN</button>
+    <button data-days="30" aria-pressed="true">30 DAYS OF WAR</button>
+    <button data-days="0">ALL TIME. NO MERCY.</button>
   </div>
 
   <div class="tiles" id="tiles"></div>
 
   <div class="card">
-    <h2>Burn rate &mdash; tokens per day, by model</h2>
+    <h2><span class="fire">BURN RATE</span> &mdash; tokens fed to the machine, daily, by model</h2>
     <div class="legend" id="legend"></div>
     <div id="chart"><div id="tip"></div></div>
   </div>
 
   <div class="card">
-    <h2>Leaderboard</h2>
+    <h2><span class="fire">THE ARENA</span></h2>
     <table id="board" aria-label="Leaderboard">
       <thead><tr>
-        <th></th><th>User</th>
-        <th class="num">Tokens</th><th class="num">Output</th>
-        <th class="num">Sessions</th><th class="num">Active days</th>
-        <th class="num">Streak</th><th>Last 30 days</th>
+        <th></th><th>Gladiator</th>
+        <th class="num">Tokens burned</th><th class="num">Shipped</th>
+        <th class="num">Sessions</th><th class="num">Days in the trenches</th>
+        <th class="num">Streak</th><th>The grind (30d)</th>
       </tr></thead>
       <tbody></tbody>
     </table>
+    <div class="quote" id="quote"></div>
   </div>
 
   <details id="daily">
-    <summary>Daily numbers (table view)</summary>
+    <summary>THE LEDGER OF SUFFERING (daily numbers, table view)</summary>
     <div class="card"></div>
   </details>
 
-  <footer>Data = daily token totals only, aggregated locally from each person's own Claude Code logs.
-    Prompts, code, and conversations never leave anyone's machine. Join in: see the README.</footer>
+  <footer>Serious footnote for a deeply unserious page: data = daily token totals only, aggregated locally
+    from each person's own Claude Code logs. Prompts, code, and conversations never leave anyone's machine.
+    Tokens measure volume, not value, and this scoreboard measures nothing but vibes. Join the arena: see the README. LFG.</footer>
 </div>
 
 <script>
@@ -259,10 +283,10 @@ function render(nDays) {
   }
   const bestStreak = DATA.map(u => ({u: u.user, n: streak(u)})).sort((a,b) => b.n - a.n)[0] || {u:"–",n:0};
   document.getElementById("tiles").innerHTML = `
-    <div class="tile"><div class="label">Tokens burned</div><div class="value">${fmt(tokens)}</div><div class="hint">${label}</div></div>
-    <div class="tile"><div class="label">Output shipped</div><div class="value">${fmt(out)}</div><div class="hint">${label}</div></div>
-    <div class="tile"><div class="label">Locked in</div><div class="value">${activeUsers.size}</div><div class="hint">workmaxxer${activeUsers.size === 1 ? "" : "s"}, ${label}</div></div>
-    <div class="tile"><div class="label">Longest grind streak</div><div class="value">${bestStreak.n}d</div><div class="hint">${bestStreak.n ? bestStreak.u + " — certified" : "nobody is locked in. LFG"}</div></div>`;
+    <div class="tile"><div class="label">TOKENS INCINERATED</div><div class="value fire">${fmt(tokens)}</div><div class="hint">fed to the machine, ${label}</div></div>
+    <div class="tile"><div class="label">OUTPUT EXTRACTED</div><div class="value">${fmt(out)}</div><div class="hint">wrenched from the void, ${label}</div></div>
+    <div class="tile"><div class="label">SOULS LOCKED IN</div><div class="value">${activeUsers.size}</div><div class="hint">${activeUsers.size === 1 ? "one warrior stands alone" : "warriors in the arena"}, ${label}</div></div>
+    <div class="tile"><div class="label">LONGEST UNBROKEN GRIND</div><div class="value">${bestStreak.n}d</div><div class="hint">${bestStreak.n ? bestStreak.u + " — ABSOLUTE UNIT" : "NOBODY IS LOCKED IN. UNACCEPTABLE."}</div></div>`;
 
   // --- stacked daily bars by model family ---
   const perDay = days.map(d => {
@@ -338,10 +362,12 @@ function render(nDays) {
   const rows = DATA.map(u => ({ u, s: userStats(u, days), streak: streak(u) }))
     .sort((a,b) => b.s.tokens - a.s.tokens);
   const fire = n => "🔥".repeat(Math.min(3, 1 + Math.floor(n/7)));
+  const TITLES = ["APEX TOKEN INCINERATOR", "CERTIFIED MENACE", "CRACKED", "LOCKED IN"];
+  const rankTitle = (i, s) => !s.tokens ? "NPC (FOR NOW)" : (TITLES[i] || "LOCKED IN");
   document.querySelector("#board tbody").innerHTML = rows.map((r,i) => `
     <tr>
       <td class="rank">${i+1}</td>
-      <td class="user">${r.u.user}${i === 0 && r.s.tokens ? " 👑" : ""}</td>
+      <td class="user">${r.u.user}${i === 0 && r.s.tokens ? " 👑" : ""}<span class="rank-title">${rankTitle(i, r.s)}</span></td>
       <td class="num">${fmt(r.s.tokens)}</td>
       <td class="num">${fmt(r.s.out)}</td>
       <td class="num">${r.s.sessions}</td>
@@ -349,6 +375,10 @@ function render(nDays) {
       <td class="num streak">${r.streak ? r.streak + "d " + fire(r.streak) : "–"}</td>
       <td class="spark">${sparkline(r.u)}</td>
     </tr>`).join("");
+  const top = rows[0];
+  document.getElementById("quote").textContent = top && top.s.tokens
+    ? `"${fmt(top.s.tokens)} tokens and still hungry." — ${top.u.user}, probably, at 2am`
+    : `"The arena is empty. This is the scariest outcome of all." — ancient grindset proverb`;
 
   // --- daily table view ---
   const dtRows = perDay.filter(p => p.total).map(p => {
@@ -360,8 +390,17 @@ function render(nDays) {
     <th class="num">Total</th><th class="num">Sessions</th></tr></thead><tbody>${dtRows}</tbody></table>`;
 }
 
+const TAPE = [
+  "THE CACHE NEVER SLEEPS", "REST IS FOR THE RATE-LIMITED", "SLEEP IS A SKILL ISSUE",
+  "YOUR COMPETITION IS PROMPTING RIGHT NOW", "ONE MORE CONTEXT WINDOW", "CTRL+C IS QUITTER TALK",
+  "THE WEEKEND CANNOT HURT YOU (SEE STREAK RULES)", "TOUCH GRASS? I ONLY TOUCH KEYBOARDS",
+  "SHIP OR BE SHIPPED", "LFG",
+];
+const tape = TAPE.map(t => `${t}<b>⚡</b>`).join("");
+document.getElementById("tickertape").innerHTML = tape + tape; // doubled for seamless loop
+
 const updated = DATA.map(u => u.updated).sort().pop();
-document.getElementById("updated").textContent = updated ? "Updated " + updated.slice(0,16).replace("T"," ") : "";
+document.getElementById("updated").textContent = updated ? "LAST FED " + updated.slice(0,16).replace("T"," ") : "";
 document.querySelectorAll(".range button").forEach(b => {
   b.addEventListener("click", () => {
     document.querySelectorAll(".range button").forEach(x => x.setAttribute("aria-pressed", x === b));
