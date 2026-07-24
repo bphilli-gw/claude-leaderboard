@@ -8,7 +8,7 @@
     {
       "name": "claude-leaderboard",
       "source": "./plugin",
-      "description": "GiveWell Claude Leaderboard (ABSOLUTE GRINDSET EDITION): /leaderboard to join, plus a daily auto-push of your token totals. Only daily aggregates leave your machine."
+      "description": "GiveWell Claude Leaderboard (ABSOLUTE GRINDSET EDITION): /leaderboard to join, plus an auto-push of your token totals every ~2h of use. Only daily aggregates leave your machine."
     }
   ]
 }
