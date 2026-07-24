@@ -152,7 +152,7 @@
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   td.rank { color: var(--muted); width: 28px; }
   td.user { font-weight: 600; }
-  .streak { color: var(--ink-2); }
+  .streak { color: var(--ink-2); white-space: nowrap; }
   .spark svg { display: block; }
 
   details { margin-top: 16px; }
@@ -201,7 +201,7 @@
       <thead><tr>
         <th></th><th>Gladiator</th>
         <th class="num" title="resets at midnight ET">Burned today</th>
-        <th class="num">Tokens burned</th><th class="num">Daily burn</th>
+        <th class="num">Tokens burned</th>
         <th class="num">Sessions</th><th class="num">Days in the trenches</th>
         <th class="num">Streak</th><th>The grind (30d)</th>
       </tr></thead>
@@ -406,14 +406,13 @@ function render(nDays) {
     .sort((a,b) => (b.today - a.today) || (b.s.tokens - a.s.tokens));
   const fire = n => "🔥".repeat(Math.min(3, 1 + Math.floor(n/7)));
   const TITLES = ["APEX TOKEN INCINERATOR", "CERTIFIED MENACE", "CRACKED", "LOCKED IN"];
-  const rankTitle = (i, r) => !r.today ? "NPC (FOR NOW)" : (TITLES[i] || "LOCKED IN");
+  const rankTitle = (i, r) => !r.today ? "NPC" : (TITLES[i] || "LOCKED IN");
   document.querySelector("#board tbody").innerHTML = rows.map((r,i) => `
     <tr>
       <td class="rank">${i+1}</td>
       <td class="user">${r.u.user}${i === 0 && r.today ? " 👑" : ""}<span class="rank-title">${rankTitle(i, r)}</span></td>
       <td class="num">${r.today ? fmt(r.today) : "–"}</td>
       <td class="num">${fmt(r.s.tokens)}</td>
-      <td class="num">${r.s.active ? fmt(Math.round(r.s.tokens / r.s.active)) + "/d" : "–"}</td>
       <td class="num">${r.s.sessions}</td>
       <td class="num">${r.s.active}</td>
       <td class="num streak">${r.streak ? r.streak + "d " + fire(r.streak) : "–"}</td>
