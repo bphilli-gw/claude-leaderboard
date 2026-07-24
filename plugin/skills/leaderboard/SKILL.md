@@ -38,7 +38,7 @@ say this in one sentence and confirm they're in before pushing.
 - **Their row isn't on the site**: the dashboard rebuilds via GitHub Actions on each
   push (~1 min). Check `git -C "$HOME/.claude-leaderboard/repo" log --oneline -3` to
   confirm their commit exists, then check the Actions tab on the repo.
-- **Auto-update didn't run**: it's throttled to once per 20h and logs to
+- **Auto-update didn't run**: it's throttled to once per 2h and logs to
   `$HOME/.claude-leaderboard/log`. Read that file.
 - **No usage found**: Claude Code logs live in `~/.claude/projects`. Cowork usage is
   not counted (no local logs) — that's a known gap, not a bug.
