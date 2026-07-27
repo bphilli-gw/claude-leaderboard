@@ -190,7 +190,7 @@
   <div class="tiles" id="tiles"></div>
 
   <div class="card">
-    <h2><span class="fire">BURN RATE</span> &mdash; tokens fed to the machine, daily, by model</h2>
+    <h2><span class="fire">BURN RATE</span> &mdash; tokens fed to the machine, daily, by warrior</h2>
     <div class="legend" id="legend"></div>
     <div id="chart"><div id="tip"></div></div>
   </div>
@@ -223,16 +223,13 @@
 <script>
 const DATA = /*__DATA__*/[];
 
-const FAMILIES = [
-  { key: "fable",  label: "Fable",  match: /fable/i,  color: "var(--m-fable)"  },
-  { key: "opus",   label: "Opus",   match: /opus/i,   color: "var(--m-opus)"   },
-  { key: "sonnet", label: "Sonnet", match: /sonnet/i, color: "var(--m-sonnet)" },
-  { key: "haiku",  label: "Haiku",  match: /haiku/i,  color: "var(--m-haiku)"  },
-  { key: "other",  label: "Other",  match: /./,       color: "var(--m-other)"  },
-];
-const fam = m => FAMILIES.find(f => f.match.test(m)).key;
-const famColor = k => FAMILIES.find(f => f.key === k).color;
 const tokSum = t => (t.in||0) + (t.out||0) + (t.cc||0) + (t.cr||0);
+
+// stable per-person colors for the stacked bars, assigned in data order
+const PERSON_COLORS = ["#2a78d6","#1baf7a","#eda100","#e8422e","#8b5cf6","#008300","#ff7a1a","#0891b2","#db2777","#65a30d"];
+const _personColorMap = {};
+DATA.forEach((u,i) => { _personColorMap[u.user] = PERSON_COLORS[i % PERSON_COLORS.length]; });
+const personColor = user => _personColorMap[user] || "var(--m-other)";
 
 function fmt(n) {
   if (n >= 1e9) return (n/1e9).toFixed(n < 1e10 ? 1 : 0) + "B";
@@ -331,20 +328,25 @@ function render(nDays) {
     <div class="tile"><div class="label">SOULS LOCKED IN</div><div class="value">${activeUsers.size}</div><div class="hint">${activeUsers.size === 1 ? "one warrior stands alone" : "warriors in the arena"}, ${label}</div></div>
     <div class="tile"><div class="label">LONGEST UNBROKEN GRIND</div><div class="value">${bestStreak.n}d</div><div class="hint">${bestStreak.n ? bestStreak.u + " — ABSOLUTE UNIT" : "NOBODY IS LOCKED IN. UNACCEPTABLE."}</div></div>`;
 
-  // --- stacked daily bars by model family ---
+  // --- stacked daily bars by person ---
   const perDay = days.map(d => {
-    const fams = {}; let sessions = 0;
+    const per = {}; let sessions = 0;
     for (const u of DATA) {
       const rec = u.days[d];
       if (!rec) continue;
       sessions += rec.sessions || 0;
-      for (const [m,t] of Object.entries(rec.models)) fams[fam(m)] = (fams[fam(m)]||0) + tokSum(t);
+      per[u.user] = (per[u.user]||0) + Object.values(rec.models).reduce((a,t)=>a+tokSum(t),0);
     }
-    return { d, fams, sessions, total: Object.values(fams).reduce((a,b)=>a+b,0) };
+    return { d, per, sessions, total: Object.values(per).reduce((a,b)=>a+b,0) };
   });
-  const famsPresent = FAMILIES.filter(f => perDay.some(p => p.fams[f.key]));
-  document.getElementById("legend").innerHTML = famsPresent
-    .map(f => `<span><i style="background:${f.color}"></i>${f.label}</span>`).join("");
+  // stable stacking order: biggest total in-window at the bottom
+  const totals = {};
+  for (const u of DATA) totals[u.user] = userStats(u, days).tokens;
+  const peoplePresent = DATA.map(u => u.user)
+    .filter(user => perDay.some(p => p.per[user]))
+    .sort((a,b) => totals[b] - totals[a]);
+  document.getElementById("legend").innerHTML = peoplePresent
+    .map(user => `<span><i style="background:${personColor(user)}"></i>${user}</span>`).join("");
 
   const W = 920, H = 240, padL = 44, padB = 22, padT = 8;
   const max = Math.max(...perDay.map(p => p.total), 1);
@@ -361,12 +363,12 @@ function render(nDays) {
   perDay.forEach((p,i) => {
     const x = padL + i*step + (step-bw)/2;
     let acc = 0;
-    const segs = famsPresent.filter(f => p.fams[f.key]);
-    segs.forEach((f, si) => {
-      const v = p.fams[f.key];
+    const segs = peoplePresent.filter(user => p.per[user]);
+    segs.forEach((user, si) => {
+      const v = p.per[user];
       const y1 = y(acc + v), h = Math.max(y(acc) - y(acc+v) - (si < segs.length-1 ? 2 : 0), 1);
       const r = si === segs.length-1 ? Math.min(4, bw/2, h) : 0;
-      svg += `<path d="M${x} ${y1+h} V${y1+r} Q${x} ${y1} ${x+r} ${y1} H${x+bw-r} Q${x+bw} ${y1} ${x+bw} ${y1+r} V${y1+h} Z" fill="${f.color}"/>`;
+      svg += `<path d="M${x} ${y1+h} V${y1+r} Q${x} ${y1} ${x+r} ${y1} H${x+bw-r} Q${x+bw} ${y1} ${x+bw} ${y1+r} V${y1+h} Z" fill="${personColor(user)}"/>`;
       acc += v;
     });
     // hover hit target = full column
@@ -380,14 +382,14 @@ function render(nDays) {
     svg += `<text x="${padL + i*step + step/2}" y="${H-6}" text-anchor="middle">${+m}/${+dd}</text>`;
   });
   const chart = document.getElementById("chart");
-  chart.innerHTML = `<div id="tip"></div><svg viewBox="0 0 ${W} ${H}" aria-label="daily tokens by model">${svg}</svg>`;
+  chart.innerHTML = `<div id="tip"></div><svg viewBox="0 0 ${W} ${H}" aria-label="daily tokens by person">${svg}</svg>`;
 
   const tip = chart.querySelector("#tip");
   chart.querySelectorAll(".hit").forEach(r => {
     r.addEventListener("mousemove", e => {
       const p = perDay[+r.dataset.i];
-      const rows = FAMILIES.filter(f => p.fams[f.key])
-        .map(f => `<div class="row"><span><i style="background:${f.color}"></i>${f.label}</span><b>${fmt(p.fams[f.key])}</b></div>`).join("");
+      const rows = peoplePresent.filter(user => p.per[user])
+        .map(user => `<div class="row"><span><i style="background:${personColor(user)}"></i>${user}</span><b>${fmt(p.per[user])}</b></div>`).join("");
       tip.innerHTML = `<div class="d">${p.d}</div>${rows || '<div class="row"><span>no usage</span></div>'}
         <div class="row"><span>Total</span><b>${fmt(p.total)}</b></div>
         <div class="row"><span>Sessions</span><b>${p.sessions}</b></div>`;
@@ -425,11 +427,11 @@ function render(nDays) {
 
   // --- daily table view ---
   const dtRows = perDay.filter(p => p.total).map(p => {
-    const cells = famsPresent.map(f => `<td class="num">${p.fams[f.key] ? fmt(p.fams[f.key]) : "–"}</td>`).join("");
+    const cells = peoplePresent.map(user => `<td class="num">${p.per[user] ? fmt(p.per[user]) : "–"}</td>`).join("");
     return `<tr><td>${p.d}</td>${cells}<td class="num">${fmt(p.total)}</td><td class="num">${p.sessions}</td></tr>`;
   }).join("");
   document.querySelector("#daily .card").innerHTML = `
-    <table><thead><tr><th>Date</th>${famsPresent.map(f=>`<th class="num">${f.label}</th>`).join("")}
+    <table><thead><tr><th>Date</th>${peoplePresent.map(user=>`<th class="num">${user}</th>`).join("")}
     <th class="num">Total</th><th class="num">Sessions</th></tr></thead><tbody>${dtRows}</tbody></table>`;
 }
 
