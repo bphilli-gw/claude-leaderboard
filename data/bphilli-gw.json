@@ -1,10 +1,6 @@
 {
  "user": "bphilli-gw",
-<<<<<<< Updated upstream
- "updated": "2026-07-28T09:54:39-04:00",
-=======
- "updated": "2026-07-28T10:06:36-04:00",
->>>>>>> Stashed changes
+ "updated": "2026-07-28T10:35:04-04:00",
  "days": {
   "2026-06-16": {
    "sessions": 1,
@@ -311,35 +307,31 @@
    }
   },
   "2026-07-28": {
-<<<<<<< Updated upstream
-   "sessions": 3,
+   "sessions": 8,
    "models": {
+    "claude-fable-5": {
+     "in": 17,
+     "out": 19594,
+     "cc": 109933,
+     "cr": 856064
+    },
+    "claude-haiku-4-5-20251001": {
+     "in": 42,
+     "out": 2427,
+     "cc": 56846,
+     "cr": 134366
+    },
     "claude-opus-4-8": {
-     "in": 5,
-     "out": 1062,
-     "cc": 204085,
-     "cr": 464045
+     "in": 160,
+     "out": 143910,
+     "cc": 1155627,
+     "cr": 15259259
     },
     "claude-opus-5": {
-     "in": 98,
-     "out": 31985,
-     "cc": 164215,
-     "cr": 3662544
-=======
-   "sessions": 5,
-   "models": {
-    "claude-opus-4-8": {
-     "in": 22,
-     "out": 26983,
-     "cc": 249999,
-     "cr": 2691181
-    },
-    "claude-opus-5": {
-     "in": 216,
-     "out": 68797,
-     "cc": 355975,
-     "cr": 9671298
->>>>>>> Stashed changes
+     "in": 4061,
+     "out": 615224,
+     "cc": 2601512,
+     "cr": 68153703
     }
    }
   }
