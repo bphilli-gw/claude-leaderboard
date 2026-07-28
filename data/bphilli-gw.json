@@ -1,6 +1,10 @@
 {
  "user": "bphilli-gw",
+<<<<<<< Updated upstream
  "updated": "2026-07-28T09:54:39-04:00",
+=======
+ "updated": "2026-07-28T10:06:36-04:00",
+>>>>>>> Stashed changes
  "days": {
   "2026-06-16": {
    "sessions": 1,
@@ -307,6 +311,7 @@
    }
   },
   "2026-07-28": {
+<<<<<<< Updated upstream
    "sessions": 3,
    "models": {
     "claude-opus-4-8": {
@@ -320,6 +325,21 @@
      "out": 31985,
      "cc": 164215,
      "cr": 3662544
+=======
+   "sessions": 5,
+   "models": {
+    "claude-opus-4-8": {
+     "in": 22,
+     "out": 26983,
+     "cc": 249999,
+     "cr": 2691181
+    },
+    "claude-opus-5": {
+     "in": 216,
+     "out": 68797,
+     "cc": 355975,
+     "cr": 9671298
+>>>>>>> Stashed changes
     }
    }
   }
