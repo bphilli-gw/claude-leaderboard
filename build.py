@@ -10,8 +10,12 @@ data = []
 for path in sorted((ROOT / "data").glob("*.json")):
     try:
         data.append(json.loads(path.read_text()))
-    except json.JSONDecodeError:
-        print(f"Skipping unreadable {path.name}")
+    except json.JSONDecodeError as e:
+        # Don't skip: quietly dropping a gladiator publishes a wrong board that
+        # looks right. Fail the build instead, so the last good deploy stays up
+        # and the red run says why. (Jul 28: a failed autostash committed conflict
+        # markers into a data file and Brendan silently vanished from the site.)
+        raise SystemExit(f"{path.name} is not valid JSON: {e}")
 
 template = (ROOT / "template.html").read_text()
 marker = "/*__DATA__*/[]"

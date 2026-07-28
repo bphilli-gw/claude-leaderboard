@@ -142,7 +142,17 @@ def main():
             subprocess.run(git + ["config", "user.name", user], check=True)
             subprocess.run(git + ["config", "user.email", f"{user}@users.noreply.github.com"], check=True)
         subprocess.run(git + ["pull", "--rebase", "--autostash", "--quiet"], check=True)
-        subprocess.run(git + ["add", "data"], check=True)
+        # `--autostash` exits 0 even when re-applying the stash conflicts, which
+        # leaves conflict markers in our data file; committing that silently drops
+        # us from the board (build.py skips files it can't parse). Our file is fully
+        # derived, so rewrite it from `out` after the pull and never stage anything
+        # else — that resolves any such conflict in our favour by construction.
+        dest.write_text(json.dumps(out, indent=1) + "\n")
+        subprocess.run(git + ["add", str(dest)], check=True)
+        try:
+            json.loads(dest.read_text())
+        except json.JSONDecodeError as e:
+            sys.exit(f"Refusing to push malformed {dest.name}: {e}")
         diff = subprocess.run(git + ["diff", "--cached", "--quiet"])
         if diff.returncode == 0:
             print("No changes to push.")
