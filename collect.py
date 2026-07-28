@@ -25,6 +25,15 @@ from pathlib import Path
 CLAUDE_PROJECTS = Path(os.environ.get("CLAUDE_CONFIG_DIR", Path.home() / ".claude")) / "projects"
 REPO_ROOT = Path(__file__).resolve().parent
 
+# The arena runs on Pacific time: everyone's day buckets flip at midnight PT,
+# whatever timezone their machine is in. Falls back to machine-local if the
+# tz database is missing — never let this crash a session-end hook.
+try:
+    from zoneinfo import ZoneInfo
+    ARENA_TZ = ZoneInfo("America/Los_Angeles")
+except Exception:
+    ARENA_TZ = None
+
 
 def github_username():
     try:
@@ -84,7 +93,7 @@ def collect():
             ts = datetime.fromisoformat(m["ts"].replace("Z", "+00:00"))
         except ValueError:
             continue
-        day = ts.replace(tzinfo=ts.tzinfo or timezone.utc).astimezone().date().isoformat()
+        day = ts.replace(tzinfo=ts.tzinfo or timezone.utc).astimezone(ARENA_TZ).date().isoformat()
         rec = days[day]
         model = rec["models"][m["model"]]
         for k in ("in", "out", "cc", "cr"):

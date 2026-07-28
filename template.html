@@ -200,7 +200,7 @@
     <table id="board" aria-label="Leaderboard">
       <thead><tr>
         <th></th><th>Gladiator</th>
-        <th class="num" title="resets at midnight ET">Burned today</th>
+        <th class="num" title="resets at midnight PT">Burned today</th>
         <th class="num">Tokens burned</th>
         <th class="num">Sessions</th><th class="num">Days in the trenches</th>
         <th class="num">Streak</th><th>The grind (30d)</th>
@@ -227,8 +227,11 @@ const tokSum = t => (t.in||0) + (t.out||0) + (t.cc||0) + (t.cr||0);
 
 // stable per-person colors for the stacked bars, assigned in data order
 const PERSON_COLORS = ["#2a78d6","#1baf7a","#eda100","#e8422e","#8b5cf6","#008300","#ff7a1a","#0891b2","#db2777","#65a30d"];
+// claimed colors win over the data-order default (she snoozes she loses)
+const CLAIMED_COLORS = { calumbest: "#e8422e", kskoffie: "#1baf7a" };
 const _personColorMap = {};
 DATA.forEach((u,i) => { _personColorMap[u.user] = PERSON_COLORS[i % PERSON_COLORS.length]; });
+Object.assign(_personColorMap, CLAIMED_COLORS);
 const personColor = user => _personColorMap[user] || "var(--m-other)";
 
 function fmt(n) {
@@ -276,10 +279,10 @@ function streak(u) {
   return n;
 }
 
-// "today" is the ET calendar day, for everyone — the arena resets at midnight ET
-const ET_TODAY = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
+// "today" is the PT calendar day, for everyone — the arena resets at midnight PT
+const PT_TODAY = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date());
 function burnedToday(u) {
-  const rec = u.days[ET_TODAY];
+  const rec = u.days[PT_TODAY];
   return rec ? Object.values(rec.models).reduce((a,t) => a + tokSum(t), 0) : 0;
 }
 
