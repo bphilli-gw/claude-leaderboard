@@ -96,13 +96,24 @@
 
   .quote { margin-top: 16px; color: var(--ink-2); font-size: 13px; font-style: italic; text-align: center; }
 
-  /* the official arena motivational poster, taped up slightly crooked on purpose */
-  .poster { text-align: center; margin-top: 28px; }
+  /* the official arena motivational poster wall, taped up slightly crooked on purpose */
+  .poster-wall { display: flex; justify-content: center; align-items: flex-start;
+                 gap: 30px; flex-wrap: wrap; margin-top: 28px; }
+  .poster { text-align: center; flex: 0 1 400px; }
   .poster img { max-width: min(400px, 92%); border-radius: 4px; border: 1px solid var(--ring);
                 box-shadow: 0 12px 32px rgba(0,0,0,0.28); transform: rotate(-2deg);
                 transition: transform 0.25s ease; }
   .poster img:hover { transform: rotate(2deg) scale(1.03); }
+  .poster:nth-child(even) img { transform: rotate(2deg); }
+  .poster:nth-child(even) img:hover { transform: rotate(-2deg) scale(1.03); }
   .poster .caption { color: var(--muted); font-size: 12px; font-style: italic; margin-top: 12px; }
+
+  /* the eternal flame: Elmo presides over the burn rate, as is right and proper */
+  .cardhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .flame { flex: none; height: 54px; border-radius: 10px; border: 1px solid var(--ring);
+           box-shadow: 0 0 18px rgba(255,122,26,0.35);
+           transform-origin: top right; transition: transform 0.25s ease; }
+  .flame:hover { transform: scale(2.2) rotate(-2deg); }
   .title-tag { display: block; font-size: 11px; font-weight: 800; letter-spacing: 0.14em; color: #ff7a1a; }
   td .rank-title { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; color: #ff7a1a; }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
@@ -198,7 +209,12 @@
   <div class="tiles" id="tiles"></div>
 
   <div class="card">
-    <h2><span class="fire">BURN RATE</span> &mdash; tokens fed to the machine, daily, by warrior</h2>
+    <div class="cardhead">
+      <h2><span class="fire">BURN RATE</span> &mdash; tokens fed to the machine, daily, by warrior</h2>
+      <img class="flame" src="assets/elmo-inferno.gif"
+           title="THE ETERNAL FLAME — it burns because we feed it"
+           alt="Elmo, arms raised in triumph, engulfed in rising hellfire. He is fine. This is fine.">
+    </div>
     <div class="legend" id="legend"></div>
     <div id="chart"><div id="tip"></div></div>
   </div>
@@ -218,10 +234,17 @@
     <div class="quote" id="quote"></div>
   </div>
 
-  <div class="poster">
-    <img src="assets/pray-harder.png"
-         alt="A crocodile slam-dunking a basketball out of an explosion, flanked by an eagle and a screaming barbarian. Caption: whoever prayed on my downfall — PRAY HARDER.">
-    <div class="caption">Official arena motivational material. Posted by management. Dedicated to everyone below rank 1.</div>
+  <div class="poster-wall">
+    <div class="poster">
+      <img src="assets/pray-harder.png"
+           alt="A crocodile slam-dunking a basketball out of an explosion, flanked by an eagle and a screaming barbarian. Caption: whoever prayed on my downfall — PRAY HARDER.">
+      <div class="caption">Official arena motivational material. Posted by management. Dedicated to everyone below rank 1.</div>
+    </div>
+    <div class="poster">
+      <img src="assets/dumbbelldore.jpg"
+           alt="Albus Dumbledore flexing two enormous photoshopped biceps. Caption: DUMBBELLDORE.">
+      <div class="caption">Arena strength coach. "It does not do to dwell on dreams and forget to LIFT." Curls context windows to failure.</div>
+    </div>
   </div>
 
   <details id="daily">
@@ -491,7 +514,9 @@ const RAIL = [
   `<span class="goomba-still">${goomba(44)}</span>`,
   `<span class="vtext fire">NO MERCY</span>`,
   `<img src="assets/pray-harder.png" alt="">`,
+  `<img src="assets/elmo-inferno.gif" alt="">`,
   `<span class="prompt">$ claude</span>`,
+  `<img src="assets/dumbbelldore.jpg" alt="">`,
   `<img src="assets/lfg.png" alt="">`,
   `<span class="vtext fire">MORE TOKENS</span>`,
   `<span class="spark">✻</span>`,
@@ -504,7 +529,8 @@ const TAPE = [
   "THE CACHE NEVER SLEEPS", "REST IS FOR THE RATE-LIMITED", "SLEEP IS A SKILL ISSUE",
   "YOUR COMPETITION IS PROMPTING RIGHT NOW", "ONE MORE CONTEXT WINDOW", "CTRL+C IS QUITTER TALK",
   "THE WEEKEND CANNOT HURT YOU (SEE STREAK RULES)", "TOUCH GRASS? I ONLY TOUCH KEYBOARDS",
-  "SHIP OR BE SHIPPED", "LFG",
+  "SHIP OR BE SHIPPED", "ELMO DIDN'T START THE FIRE. YOU DID. KEEP GOING",
+  "DO YOU EVEN LIFT, WIZARD?", "TEN POINTS TO GRINDFFINDOR", "LFG",
 ];
 const tape = TAPE.map(t => `${t}<b>⚡</b>`).join("");
 document.getElementById("tickertape").innerHTML = tape + tape; // doubled for seamless loop
