@@ -1,6 +1,6 @@
 {
  "user": "calumbest",
- "updated": "2026-09-02T09:46:59-07:00",
+ "updated": "2026-09-02T19:12:28-07:00",
  "days": {
   "2026-07-27": {
    "sessions": 1,
@@ -53,14 +53,8 @@
    }
   },
   "2026-08-02": {
-   "sessions": 2,
+   "sessions": 1,
    "models": {
-    "claude-fable-5": {
-     "in": 93,
-     "out": 73633,
-     "cc": 451226,
-     "cr": 5079795
-    },
     "claude-opus-5": {
      "in": 43,
      "out": 30514,
@@ -70,13 +64,13 @@
    }
   },
   "2026-08-03": {
-   "sessions": 4,
+   "sessions": 3,
    "models": {
     "claude-fable-5": {
-     "in": 44,
-     "out": 10744,
-     "cc": 117831,
-     "cr": 892748
+     "in": 34,
+     "out": 5795,
+     "cc": 85971,
+     "cr": 695443
     },
     "claude-opus-5": {
      "in": 2355,
@@ -431,8 +425,14 @@
    }
   },
   "2026-09-02": {
-   "sessions": 1,
+   "sessions": 3,
    "models": {
+    "claude-fable-5-1": {
+     "in": 4451,
+     "out": 63093,
+     "cc": 260824,
+     "cr": 3857843
+    },
     "claude-opus-4-8": {
      "in": 38,
      "out": 23221,
