@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""Aggregate your local Claude Code usage logs into daily totals.
+"""Aggregate your local Claude Code and Codex CLI usage logs into daily totals.
 
-Reads ~/.claude/projects/**/*.jsonl, dedupes streamed messages, and writes
-data/<github-username>.json containing ONLY daily aggregates: token counts
-by model, and session counts. No prompts, code, file paths, or conversation
-content ever leave your machine.
+Reads ~/.claude/projects/**/*.jsonl and ~/.codex/sessions/**/*.jsonl, dedupes
+streamed/retried messages, and writes data/<github-username>.json containing
+ONLY daily aggregates: token counts by model, and session counts. No prompts,
+code, file paths, or conversation content ever leave your machine.
+
+Claude models keep their bare names; Codex models are keyed "codex/<model>" so
+the dashboard can tell the two machines apart. Both count toward every total.
 
 Usage:
     python3 collect.py            # write your data file
@@ -23,6 +26,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 CLAUDE_PROJECTS = Path(os.environ.get("CLAUDE_CONFIG_DIR", Path.home() / ".claude")) / "projects"
+CODEX_SESSIONS = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")) / "sessions"
 REPO_ROOT = Path(__file__).resolve().parent
 
 # The arena runs on Pacific time: everyone's day buckets flip at midnight PT,
@@ -48,13 +52,11 @@ def github_username():
     return None
 
 
-def collect():
-    """Return {date: {"models": {model: {in,out,cc,cr}}, "sessions": set()}}."""
+def claude_responses():
+    """One record per Claude Code API response: {ts, session, model, in, out, cc, cr}."""
     # Streaming writes the same message id several times; last write wins.
     # Key on (message id, request id) so retries of a request don't double-count.
     messages = {}
-    if not CLAUDE_PROJECTS.is_dir():
-        sys.exit(f"No Claude Code logs found at {CLAUDE_PROJECTS}")
     for path in CLAUDE_PROJECTS.rglob("*.jsonl"):
         try:
             with open(path, errors="replace") as fh:
@@ -83,10 +85,82 @@ def collect():
                     }
         except OSError:
             continue
+    return list(messages.values())
+
+
+def codex_usage(u):
+    """Map OpenAI usage fields onto ours. OpenAI's input_tokens INCLUDES cached
+    tokens (Anthropic's excludes them), so uncached input = input - cached."""
+    cached = u.get("cached_input_tokens", 0)
+    return {"in": max(u.get("input_tokens", 0) - cached, 0), "out": u.get("output_tokens", 0),
+            "cc": u.get("cache_write_input_tokens", 0), "cr": cached}
+
+
+def codex_responses():
+    """One record per Codex API response, same shape as claude_responses().
+
+    Codex writes one rollout file per thread. Each API response appends a
+    token_usage_record keyed by response_id; the model lives on the turn_context
+    of the same turn. Sub-agent threads get their own file but name their parent,
+    so a parent and its sub-agents count as one session. Rollouts from Codex CLI
+    0.147 and earlier have no token_usage_record; for those we fall back to the
+    per-turn token_count events (within ~2% of the real figure).
+    """
+    responses, parent, fallback = {}, {}, []
+    for path in CODEX_SESSIONS.rglob("*.jsonl"):
+        turn_model, model, thread, old_style, prev = {}, None, None, [], None
+        try:
+            with open(path, errors="replace") as fh:
+                for line in fh:
+                    if not any(k in line for k in ('"token_usage_record"', '"turn_context"', '"session_meta"', '"token_count"')):
+                        continue
+                    try:
+                        entry = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    kind, p = entry.get("type"), entry.get("payload") or {}
+                    if kind == "session_meta":
+                        thread = p.get("id")
+                        src = p.get("thread_source")
+                        spawn = src.get("subagent", {}).get("thread_spawn", {}) if isinstance(src, dict) else {}
+                        parent[thread] = spawn.get("parent_thread_id") or thread
+                    elif kind == "turn_context":
+                        model = p.get("model") or model
+                        turn_model[p.get("turn_id")] = model
+                    elif kind == "token_usage_record":
+                        key = p.get("response_id") or (path.name, entry.get("ordinal"))
+                        responses[key] = {
+                            "ts": entry.get("timestamp"),
+                            "session": p.get("session_id") or thread,
+                            "model": "codex/" + (turn_model.get(p.get("turn_id")) or model or "unknown"),
+                            **codex_usage(p.get("usage") or {}),
+                        }
+                    elif kind == "event_msg" and p.get("type") == "token_count":
+                        last = (p.get("info") or {}).get("last_token_usage")
+                        if last and last != prev:  # repeated events for the same response
+                            old_style.append({"ts": entry.get("timestamp"), "session": thread,
+                                              "model": "codex/" + (model or "unknown"), **codex_usage(last)})
+                        prev = last
+        except OSError:
+            continue
+        if old_style and not any(r["session"] == thread for r in responses.values()):
+            fallback.extend(old_style)
+    out = list(responses.values()) + fallback
+    for r in out:
+        r["session"] = parent.get(r["session"], r["session"])
+    return out
+
+
+def collect():
+    """Return {date: {"models": {model: {in,out,cc,cr}}, "sessions": set()}}."""
+    sources = [(CLAUDE_PROJECTS, claude_responses), (CODEX_SESSIONS, codex_responses)]
+    if not any(d.is_dir() for d, _ in sources):
+        sys.exit(f"No Claude Code logs at {CLAUDE_PROJECTS} and no Codex logs at {CODEX_SESSIONS}")
+    records = [r for d, read in sources if d.is_dir() for r in read()]
 
     days = defaultdict(lambda: {"models": defaultdict(lambda: {"in": 0, "out": 0, "cc": 0, "cr": 0}),
                                 "sessions": set()})
-    for m in messages.values():
+    for m in records:
         if not m["ts"]:
             continue
         try:
@@ -129,8 +203,13 @@ def main():
     dest.parent.mkdir(exist_ok=True)
     dest.write_text(json.dumps(out, indent=1) + "\n")
 
-    total = sum(t[k] for rec in days.values() for t in rec["models"].values() for k in ("in", "out", "cc", "cr"))
-    print(f"Wrote {dest.relative_to(REPO_ROOT)}: {len(days)} active days, {total:,} total tokens")
+    by_tool = defaultdict(int)
+    for rec in days.values():
+        for model, t in rec["models"].items():
+            by_tool["codex" if model.startswith("codex/") else "claude"] += sum(t.values())
+    total = sum(by_tool.values())
+    split = f" ({by_tool['codex']:,} via Codex)" if by_tool["codex"] else ""
+    print(f"Wrote {dest.relative_to(REPO_ROOT)}: {len(days)} active days, {total:,} total tokens{split}")
 
     if args.push:
         # Only data/ is committed; the dashboard is rebuilt by the Pages workflow,
