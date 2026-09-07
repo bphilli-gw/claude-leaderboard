@@ -6,12 +6,18 @@ streamed/retried messages, and writes data/<github-username>.json containing
 ONLY daily aggregates: token counts by model, and session counts. No prompts,
 code, file paths, or conversation content ever leave your machine.
 
+Local logs are not forever (Claude Code deletes a transcript 30 days after its
+last activity), so each run folds the already-published days back in: per day
+and model the larger count wins, and days the logs no longer contain are kept
+as published. Pass --fresh to rebuild from local logs alone.
+
 Claude models keep their bare names; Codex models are keyed "codex/<model>" so
 the dashboard can tell the two machines apart. Both count toward every total.
 
 Usage:
     python3 collect.py            # write your data file
     python3 collect.py --push     # also rebuild index.html, commit, push
+    python3 collect.py --fresh    # ignore the published file (drops history)
 
 Stdlib only. Requires `gh` (for your GitHub username) or pass --user.
 """
@@ -177,56 +183,108 @@ def collect():
     return days
 
 
+def published_days(dest):
+    """Days already committed for this user, read from HEAD rather than the
+    working tree so a dirty or conflicted file can't feed garbage into the merge.
+    {} for a new user (no file yet) or anything unreadable."""
+    rel = dest.relative_to(REPO_ROOT).as_posix()
+    try:
+        out = subprocess.run(["git", "-C", str(REPO_ROOT), "show", f"HEAD:{rel}"],
+                             capture_output=True, text=True, timeout=15)
+        if out.returncode == 0:
+            return json.loads(out.stdout).get("days") or {}
+    except (OSError, subprocess.TimeoutExpired, ValueError, AttributeError):
+        pass
+    return {}
+
+
+def merge_history(fresh, published):
+    """Fold the published days back into the freshly collected ones.
+
+    Claude Code deletes a session's transcript 30 days after its last activity
+    (`cleanupPeriodDays`), so a fresh collect() sees less of a month-old day on
+    every run: the short sessions drop out first and the day shrinks, then it
+    vanishes. Nothing legitimate makes a day's count go DOWN between runs, so per
+    day and model we keep the larger of fresh vs published, and days the logs no
+    longer know about are carried forward as they were. Both inputs are in the
+    data-file shape: {day: {"sessions": n, "models": {model: {in,out,cc,cr}}}}.
+    Returns (merged, carried) — carried is how many days exist only as published.
+    """
+    merged, carried = {}, 0
+    for day in sorted(set(fresh) | set(published)):
+        new, old = fresh.get(day), published.get(day) or {}
+        if new is None:
+            merged[day] = old
+            carried += 1
+            continue
+        models = {model: dict(t) for model, t in new["models"].items()}
+        for model, t in (old.get("models") or {}).items():
+            cur = models.setdefault(model, {"in": 0, "out": 0, "cc": 0, "cr": 0})
+            for k in ("in", "out", "cc", "cr"):
+                cur[k] = max(cur.get(k, 0), t.get(k, 0))
+        merged[day] = {
+            "sessions": max(new["sessions"], old.get("sessions", 0)),
+            "models": dict(sorted(models.items())),
+        }
+    return merged, carried
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--user", help="username for your data file (default: gh api user)")
     ap.add_argument("--push", action="store_true", help="rebuild dashboard, commit, and push")
+    ap.add_argument("--fresh", action="store_true",
+                    help="don't merge with the published file; write only what local logs contain (drops history)")
     args = ap.parse_args()
 
     user = args.user or github_username()
     if not user:
         sys.exit("Couldn't get your GitHub username from `gh`. Pass --user <name>.")
 
+    git = ["git", "-C", str(REPO_ROOT)]
+    if args.push:
+        # Pull before collecting so the merge below sees the latest published file.
+        subprocess.run(git + ["pull", "--rebase", "--autostash", "--quiet"], check=True)
+
+    dest = REPO_ROOT / "data" / f"{user}.json"
     days = collect()
+    fresh = {
+        day: {
+            "sessions": len(rec["sessions"]),
+            "models": {model: dict(t) for model, t in sorted(rec["models"].items())},
+        }
+        for day, rec in sorted(days.items())
+    }
+    merged, carried = (fresh, 0) if args.fresh else merge_history(fresh, published_days(dest))
     out = {
         "user": user,
         "updated": datetime.now().astimezone().isoformat(timespec="seconds"),
-        "days": {
-            day: {
-                "sessions": len(rec["sessions"]),
-                "models": {model: dict(t) for model, t in sorted(rec["models"].items())},
-            }
-            for day, rec in sorted(days.items())
-        },
+        "days": merged,
     }
-    dest = REPO_ROOT / "data" / f"{user}.json"
     dest.parent.mkdir(exist_ok=True)
     dest.write_text(json.dumps(out, indent=1) + "\n")
 
     by_tool = defaultdict(int)
-    for rec in days.values():
+    for rec in merged.values():
         for model, t in rec["models"].items():
             by_tool["codex" if model.startswith("codex/") else "claude"] += sum(t.values())
     total = sum(by_tool.values())
     split = f" ({by_tool['codex']:,} via Codex)" if by_tool["codex"] else ""
-    print(f"Wrote {dest.relative_to(REPO_ROOT)}: {len(days)} active days, {total:,} total tokens{split}")
+    kept = f" ({carried} carried from published history)" if carried else ""
+    print(f"Wrote {dest.relative_to(REPO_ROOT)}: {len(merged)} active days{kept}, {total:,} total tokens{split}")
 
     if args.push:
         # Only data/ is committed; the dashboard is rebuilt by the Pages workflow,
         # so concurrent pushers can never conflict (each touches only their own file).
         subprocess.run([sys.executable, str(REPO_ROOT / "build.py")], check=True)  # local convenience copy
-        git = ["git", "-C", str(REPO_ROOT)]
         ident = subprocess.run(git + ["config", "user.email"], capture_output=True, text=True)
         if not ident.stdout.strip():
             subprocess.run(git + ["config", "user.name", user], check=True)
             subprocess.run(git + ["config", "user.email", f"{user}@users.noreply.github.com"], check=True)
-        subprocess.run(git + ["pull", "--rebase", "--autostash", "--quiet"], check=True)
-        # `--autostash` exits 0 even when re-applying the stash conflicts, which
-        # leaves conflict markers in our data file; committing that silently drops
-        # us from the board (build.py skips files it can't parse). Our file is fully
-        # derived, so rewrite it from `out` after the pull and never stage anything
-        # else — that resolves any such conflict in our favour by construction.
-        dest.write_text(json.dumps(out, indent=1) + "\n")
+        # We pulled before writing, so `--autostash` only ever stashes other
+        # people's local edits — and if re-applying one leaves conflict markers in
+        # our file, the write above already replaced it wholesale from `out`
+        # (built from HEAD, never from the working tree). Never stage anything else.
         subprocess.run(git + ["add", str(dest)], check=True)
         try:
             json.loads(dest.read_text())

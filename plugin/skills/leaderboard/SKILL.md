@@ -43,3 +43,9 @@ say this in one sentence and confirm they're in before pushing.
   `$HOME/.claude-leaderboard/log`. Read that file.
 - **No usage found**: Claude Code logs live in `~/.claude/projects`, Codex CLI logs in
   `~/.codex/sessions`. Cowork usage is not counted (no local logs) — that's a known gap, not a bug.
+- **A past day shrank or vanished / total went down**: Claude Code deletes transcripts 30 days
+  after last activity. `collect.py` now merges with the published file (per day and model the
+  larger count wins; missing days are carried forward), so this only affects pushes made before
+  that fix. A lost day is still in the repo's git history of their data file
+  (`git -C "$HOME/.claude-leaderboard/repo" log -p -- data/<user>.json`). To keep local logs
+  longer, set `cleanupPeriodDays` in `~/.claude/settings.json`.

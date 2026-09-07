@@ -6,7 +6,7 @@ An opt-in, straude-style leaderboard for Claude Code and Codex CLI usage at Give
 
 Only daily aggregates: token counts by model, and session counts per day. The collector reads your local Claude Code logs (`~/.claude/projects`) and Codex CLI logs (`~/.codex/sessions`), sums them up, and writes one small JSON file to `data/<your-github-username>.json` in this repo. Prompts, code, conversation content, project names, and file paths never leave your machine. Read `collect.py` (about 250 lines, stdlib only) to verify.
 
-Two known gaps: Cowork usage isn't counted (it doesn't write these local logs), and history only goes back as far as your local logs do (Claude Code prunes old sessions). Codex rollouts written by CLI 0.147 or earlier have no per-response usage records, so those days use Codex's coarser per-turn counter (within a couple of percent).
+One known gap: Cowork usage isn't counted (it doesn't write these local logs). History goes back as far as your local logs did when you joined, and is kept from there: Claude Code deletes a transcript 30 days after its last activity, so each push folds your already-published days back in instead of letting them shrink and vanish. Codex rollouts written by CLI 0.147 or earlier have no per-response usage records, so those days use Codex's coarser per-turn counter (within a couple of percent).
 
 **This repo is public** so the dashboard can live on GitHub Pages. Joining means your GitHub handle and daily token totals are visible on the open internet. If you're not comfortable with that, don't join (or ask Brendan about a pseudonym).
 
@@ -51,4 +51,5 @@ Live at **https://bphilli-gw.github.io/claude-leaderboard/** (updates a minute o
 - **Codex counts too.** Codex models appear as `codex/<model>` in the data files, and the Armory table on the dashboard breaks tokens down by machine and gladiator. OpenAI reports cached input inside its input count; the collector splits it back out so cache reads line up with Claude's.
 - **Output** = tokens the model generated, shown separately as the "real work" number.
 - **Sessions** = distinct Claude Code sessions plus distinct Codex threads (a Codex thread and its sub-agents count once) with at least one response that day.
+- **History** = each push merges what your local logs still contain with what you've already published: per day and model the larger count wins, and days your logs no longer have are carried forward. Nothing legitimate makes a day go down, so the board only ever accrues. `python3 collect.py --fresh` rebuilds from local logs alone if you ever need to.
 - **Streak** = consecutive days with any usage, ending today or yesterday. Weekends can't break you: an idle Saturday or Sunday is skipped, and weekend usage still counts. Only an idle weekday ends the grind. Git blame the scoreboard, not the referee.
