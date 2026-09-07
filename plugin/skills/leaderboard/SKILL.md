@@ -6,6 +6,7 @@ description: Join or update the GiveWell Claude Leaderboard (ABSOLUTE GRINDSET E
 # GiveWell Claude Leaderboard
 
 Opt-in token-usage leaderboard: https://bphilli-gw.github.io/claude-leaderboard/
+Counts Claude Code and Codex CLI usage from local logs; Codex models show as `codex/<model>`.
 Maintainer: Brendan Phillips (`bphilli-gw` on GitHub, @Brendan Phillips on Slack).
 
 The repo is PUBLIC. Joining publishes the user's GitHub handle and daily token totals
@@ -40,5 +41,5 @@ say this in one sentence and confirm they're in before pushing.
   confirm their commit exists, then check the Actions tab on the repo.
 - **Auto-update didn't run**: it's throttled to once per 2h and logs to
   `$HOME/.claude-leaderboard/log`. Read that file.
-- **No usage found**: Claude Code logs live in `~/.claude/projects`. Cowork usage is
-  not counted (no local logs) — that's a known gap, not a bug.
+- **No usage found**: Claude Code logs live in `~/.claude/projects`, Codex CLI logs in
+  `~/.codex/sessions`. Cowork usage is not counted (no local logs) — that's a known gap, not a bug.
