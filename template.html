@@ -173,6 +173,13 @@
   td.user { font-weight: 600; }
   .streak { color: var(--ink-2); white-space: nowrap; }
   .spark svg { display: block; }
+  .tool { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 0.06em; color: #fff;
+          border-radius: 5px; padding: 1px 6px; margin-right: 8px; vertical-align: 1px; background: var(--m-other); }
+  .tool.claude { background: linear-gradient(90deg, #e8422e, #ff7a1a); }
+  .tool.codex { background: var(--m-fable); }
+  td.model { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; white-space: nowrap; }
+  #models table { font-size: 12.5px; }
+  #models tr.total td { font-weight: 650; }
 
   details { margin-top: 16px; }
   summary { cursor: pointer; color: var(--ink-2); font-size: 13px; font-weight: 600; }
@@ -192,7 +199,7 @@
       <img class="mark" src="assets/lfg.png" alt="The LFG emoji, mid-scream, Claude starburst on its forehead">
       <div>
         <h1><span class="fire">CLAUDE LEADERBOARD</span><span class="badge">ABSOLUTE GRINDSET EDITION</span></h1>
-        <div class="sub">Opt-in Claude Code workmaxxing at GiveWell. Tokens are volume, not value. The volume is ENORMOUS. LFG.</div>
+        <div class="sub">Opt-in Claude Code (and Codex) workmaxxing at GiveWell. Tokens are volume, not value. The volume is ENORMOUS. LFG.</div>
       </div>
     </div>
     <div class="updated" id="updated"></div>
@@ -252,13 +259,18 @@
     </div>
   </div>
 
+  <div class="card">
+    <h2><span class="fire">THE ARMORY</span> &mdash; which machines each gladiator feeds</h2>
+    <div id="models"></div>
+  </div>
+
   <details id="daily">
     <summary>THE LEDGER OF SUFFERING (daily numbers, table view)</summary>
     <div class="card"></div>
   </details>
 
   <footer>Serious footnote for a deeply unserious page: data = daily token totals only, aggregated locally
-    from each person's own Claude Code logs. Prompts, code, and conversations never leave anyone's machine.
+    from each person's own Claude Code and Codex logs. Prompts, code, and conversations never leave anyone's machine.
     Tokens measure volume, not value, and this scoreboard measures nothing but vibes. Join the arena: see the README. LFG.</footer>
 </div>
 
@@ -469,6 +481,33 @@ function render(nDays) {
   document.getElementById("quote").textContent = top && top.s.tokens
     ? `"${fmt(top.s.tokens)} tokens and still hungry." — ${top.u.user}, probably, at 2am`
     : `"The arena is empty. This is the scariest outcome of all." — ancient grindset proverb`;
+
+  // --- armory: tokens by model, per person, in window ---
+  // Codex models arrive keyed "codex/<model>" (see collect.py); everything else is Claude.
+  const toolOf = m => m.startsWith("codex/") ? "codex" : "claude";
+  const byModel = {};
+  for (const u of DATA) for (const d of days) {
+    const rec = u.days[d];
+    if (!rec) continue;
+    for (const [m, t] of Object.entries(rec.models)) {
+      const row = byModel[m] || (byModel[m] = {});
+      row[u.user] = (row[u.user] || 0) + tokSum(t);
+    }
+  }
+  const modelTotal = m => Object.values(byModel[m]).reduce((a,b) => a+b, 0);
+  const modelsPresent = Object.keys(byModel)
+    .sort((a,b) => toolOf(a).localeCompare(toolOf(b)) || modelTotal(b) - modelTotal(a));
+  const armoryRows = modelsPresent.map(m => {
+    const tool = toolOf(m);
+    const cells = peoplePresent.map(user => `<td class="num">${byModel[m][user] ? fmt(byModel[m][user]) : "–"}</td>`).join("");
+    return `<tr><td class="model"><span class="tool ${tool}">${tool.toUpperCase()}</span>${m.replace(/^codex\//, "")}</td>${cells}<td class="num">${fmt(modelTotal(m))}</td></tr>`;
+  }).join("");
+  const armoryTotals = peoplePresent.map(user => `<td class="num">${fmt(totals[user])}</td>`).join("");
+  document.getElementById("models").innerHTML = modelsPresent.length ? `
+    <table aria-label="Tokens by model and person"><thead><tr><th>Machine</th>${peoplePresent.map(user=>`<th class="num">${user}</th>`).join("")}
+    <th class="num">Total</th></tr></thead><tbody>${armoryRows}
+    <tr class="total"><td>All machines</td>${armoryTotals}<td class="num">${fmt(tokens)}</td></tr></tbody></table>`
+    : `<div class="quote">"An empty armory. Not a single machine fed." — the quartermaster, disappointed</div>`;
 
   // --- daily table view ---
   const dtRows = perDay.filter(p => p.total).map(p => {
