@@ -1,6 +1,6 @@
 {
  "user": "calumbest",
- "updated": "2026-09-07T08:01:41-07:00",
+ "updated": "2026-09-07T13:46:55-07:00",
  "days": {
   "2026-07-27": {
    "sessions": 1,
@@ -442,8 +442,14 @@
    }
   },
   "2026-09-07": {
-   "sessions": 1,
+   "sessions": 2,
    "models": {
+    "claude-fable-5": {
+     "in": 2,
+     "out": 477,
+     "cc": 245049,
+     "cr": 0
+    },
     "claude-fable-5-1": {
      "in": 516,
      "out": 9773,
