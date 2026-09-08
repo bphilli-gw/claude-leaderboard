@@ -6,6 +6,7 @@ description: Join or update the GiveWell Claude Leaderboard (ABSOLUTE GRINDSET E
 # GiveWell Claude Leaderboard
 
 Opt-in token-usage leaderboard: https://bphilli-gw.github.io/claude-leaderboard/
+Counts Claude Code and Codex CLI usage from local logs; Codex models show as `codex/<model>`.
 Maintainer: Brendan Phillips (`bphilli-gw` on GitHub, @Brendan Phillips on Slack).
 
 The repo is PUBLIC. Joining publishes the user's GitHub handle and daily token totals
@@ -40,5 +41,11 @@ say this in one sentence and confirm they're in before pushing.
   confirm their commit exists, then check the Actions tab on the repo.
 - **Auto-update didn't run**: it's throttled to once per 2h and logs to
   `$HOME/.claude-leaderboard/log`. Read that file.
-- **No usage found**: Claude Code logs live in `~/.claude/projects`. Cowork usage is
-  not counted (no local logs) — that's a known gap, not a bug.
+- **No usage found**: Claude Code logs live in `~/.claude/projects`, Codex CLI logs in
+  `~/.codex/sessions`. Cowork usage is not counted (no local logs) — that's a known gap, not a bug.
+- **A past day shrank or vanished / total went down**: Claude Code deletes transcripts 30 days
+  after last activity. `collect.py` now merges with the published file (per day and model the
+  larger count wins; missing days are carried forward), so this only affects pushes made before
+  that fix. A lost day is still in the repo's git history of their data file
+  (`git -C "$HOME/.claude-leaderboard/repo" log -p -- data/<user>.json`). To keep local logs
+  longer, set `cleanupPeriodDays` in `~/.claude/settings.json`.
